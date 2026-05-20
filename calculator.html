@@ -214,7 +214,7 @@ function resolveIncome(S, age) {
 }
 
 /* ===== NIIT (Net Investment Income Tax): 3.8% on lesser of investment income or MAGI above threshold ===== */
-/* Both NIIT thresholds and CA Mental Health threshold are NOMINAL (not inflation-indexed).
+/* Both NIIT thresholds and CA Behavioral Health threshold are NOMINAL (not inflation-indexed).
    In the real-dollar framework, these thresholds shrink by 1/(1+inflation)^yearsOut. */
 function computeNIIT(S, wagesA, wagesB, investmentIncome, yearsOut) {
   const invIncome = Math.max(0, investmentIncome || 0);
@@ -272,7 +272,7 @@ const DEFAULT_FED_LTCG = {
   "Head of Household":[{rate:0.00,upTo:64750},{rate:0.15,upTo:566700},{rate:0.20,upTo:Infinity}],
 };
 /* CA 2025 brackets (FTB 2025-540 rate schedules). Top regular rate is 12.3%.
-   The 1% Mental Health Services Tax (Prop 63, on income > $1M nominal) is computed separately
+   The 1% Behavioral Health Services Tax (formerly Mental Health Services Tax, on income > $1M nominal) is computed separately
    because its threshold is NOT inflation-indexed — it must shrink in real terms over time. */
 const DEFAULT_CA = {
   "Single":[
@@ -338,7 +338,7 @@ function createDefaultState() {
     // NIIT (Net Investment Income Tax)
     niitRate:0.038, niitThresholdSingle:200000, niitThresholdMFJ:250000,
     estInvestmentYield:0.02, // estimated annual taxable brokerage income yield
-    // CA Mental Health Services Tax (already in brackets as 13.3% top rate; threshold for display)
+    // CA Behavioral Health Services Tax (formerly Mental Health Services Tax), computed separately
     caMentalHealthThreshold:1000000, caMentalHealthRate:0.01,
     // brackets
     fedBrackets: structuredClone(DEFAULT_FED), fedView:"Married Filing Jointly",
@@ -579,6 +579,15 @@ function calcStackedCapitalGainsTax(brackets, ordinaryTaxableIncome, capitalGain
   }
   return { total, byBracket };
 }
+function splitFederalTaxableIncome(ordinaryIncome, preferentialIncome, deduction) {
+  const ordinaryGross = Math.max(0, ordinaryIncome || 0);
+  const preferentialGross = Math.max(0, preferentialIncome || 0);
+  const ded = Math.max(0, deduction || 0);
+  const ordinaryTaxable = Math.max(0, ordinaryGross - ded);
+  const unusedDeduction = Math.max(0, ded - ordinaryGross);
+  const preferentialTaxable = Math.max(0, preferentialGross - unusedDeduction);
+  return { ordinaryTaxable, preferentialTaxable };
+}
 
 /* Domestic Partners rule: Federal = two Singles (or HoH); CA = MFJ on combined */
 function householdTaxes(S, currentGrossA, currentGrossB, taxableBalance=0, yearsOut=0){
@@ -591,10 +600,12 @@ function householdTaxes(S, currentGrossA, currentGrossB, taxableBalance=0, years
       401(k) deferrals reduce income tax but NOT FICA. */
   function singleTaxes(gross, preTax, brokerageIncomeShare, stdFed, fedBr, fedCgBr, stdCA, caBr, S, addlMedicareThreshold){
     const wages = Math.max(0, gross - preTax);
-    const taxableFed = Math.max(0, wages - stdFed);
+    const federalTaxable = splitFederalTaxableIncome(wages, brokerageIncomeShare, stdFed);
+    const taxableFed = federalTaxable.ordinaryTaxable;
+    const taxableCapitalGainsFed = federalTaxable.preferentialTaxable;
     const taxableCA  = Math.max(0, wages + brokerageIncomeShare - stdCA);
     const fedTaxRes = calcTax(fedBr, taxableFed);
-    const fedCgRes = calcStackedCapitalGainsTax(fedCgBr, taxableFed, brokerageIncomeShare);
+    const fedCgRes = calcStackedCapitalGainsTax(fedCgBr, taxableFed, taxableCapitalGainsFed);
     const caTaxRes  = calcTax(caBr, taxableCA);
     const niit = computeNIIT(S, wages, 0, brokerageIncomeShare, yearsOut);
     const ss = S.ssRate * Math.min(gross, S.ssCap);
@@ -613,6 +624,7 @@ function householdTaxes(S, currentGrossA, currentGrossB, taxableBalance=0, years
       niit,
       payroll,
       taxableFed,
+      taxableCapitalGainsFed,
       taxableCA,
       brokerageIncome: brokerageIncomeShare,
       fedBreakdown: fedTaxRes.byBracket,
@@ -652,7 +664,9 @@ function householdTaxes(S, currentGrossA, currentGrossB, taxableBalance=0, years
       netIncome, federalTax, stateTax, payrollTax: payrollCombined, niitTax,
       federalOrdinaryTax: (A.fedOrdinaryTax||0) + (B.fedOrdinaryTax||0),
       federalCapitalGainsTax: (A.fedCapitalGainsTax||0) + (B.fedCapitalGainsTax||0),
-      taxableIncomeFed: (A.taxableFed||0)+(B.taxableFed||0), taxableIncomeCA: taxableCACombined,
+      taxableIncomeFed: (A.taxableFed||0)+(B.taxableFed||0),
+      taxableCapitalGainsFed: (A.taxableCapitalGainsFed||0)+(B.taxableCapitalGainsFed||0),
+      taxableIncomeCA: taxableCACombined,
       grossTotal, preTaxTotal,
       brokerageIncome,
       wagesA: A.wages||0, wagesB: B.wages||0,
@@ -677,12 +691,14 @@ function householdTaxes(S, currentGrossA, currentGrossB, taxableBalance=0, years
                : S.filingMode==="Single" ? S.stdDedCA_Single
                : S.filingMode==="Head of Household" ? S.stdDedCA_HoH
                : S.stdDedCA_MFJ;
-  const taxableFed = Math.max(0, wages - stdFed);
+  const federalTaxable = splitFederalTaxableIncome(wages, brokerageIncome, stdFed);
+  const taxableFed = federalTaxable.ordinaryTaxable;
+  const taxableCapitalGainsFed = federalTaxable.preferentialTaxable;
   const taxableCA  = Math.max(0, wages + brokerageIncome - stdCA);
   const wagesA = isMFJ ? Math.max(0, grossA - preTaxA) : wages;
   const wagesB = isMFJ ? Math.max(0, grossB - preTaxB) : 0;
   const federalRes = calcTax(fed[S.filingMode], taxableFed);
-  const federalCgRes = calcStackedCapitalGainsTax(S.fedCapitalGainsBrackets[S.filingMode] || DEFAULT_FED_LTCG[S.filingMode], taxableFed, brokerageIncome);
+  const federalCgRes = calcStackedCapitalGainsTax(S.fedCapitalGainsBrackets[S.filingMode] || DEFAULT_FED_LTCG[S.filingMode], taxableFed, taxableCapitalGainsFed);
   const caRes  = calcTax(cab[S.filingMode], taxableCA);
   const niitTax = computeNIIT(S, wagesA, wagesB, brokerageIncome, yearsOut);
 
@@ -698,7 +714,7 @@ function householdTaxes(S, currentGrossA, currentGrossB, taxableBalance=0, years
     netIncome: currentGross + brokerageIncome - preTaxTotal - (federalRes.total + federalCgRes.total + caRes.total + payroll + niitTax),
     federalTax: federalRes.total + federalCgRes.total, stateTax: caRes.total, payrollTax: payroll, niitTax,
     federalOrdinaryTax: federalRes.total, federalCapitalGainsTax: federalCgRes.total,
-    taxableIncomeFed: taxableFed, taxableIncomeCA: taxableCA,
+    taxableIncomeFed: taxableFed, taxableCapitalGainsFed, taxableIncomeCA: taxableCA,
     grossTotal: currentGross, preTaxTotal: preTaxTotal,
     brokerageIncome,
     wagesA, wagesB,
@@ -1092,7 +1108,7 @@ function runFullProjection(S, fiResult) {
                 let cost = 0;
                 if (ev.kind === "Recurring" && age >= (ev.startAge || 0) && age < (ev.endAge || Infinity)) {
                     cost = ev.amount || 0;
-                } else if (ev.kind === "One-time" && age === ev.atAge) {
+                } else if (ev.kind === "One-time" && ev.atAge != null && age <= ev.atAge && ev.atAge < age + 1) {
                     cost = (ev.amount || 0) / 12;
                 }
                 const realFactor = ev.isNominal ? nominalDiscount : 1;
@@ -1140,7 +1156,7 @@ function runFullProjection(S, fiResult) {
             }, 0);
 
             let oneTimeSpend = S.budget.reduce((total, ev) => {
-                 if (ev.kind === "One-time" && age === ev.atAge) {
+                 if (ev.kind === "One-time" && ev.atAge != null && age <= ev.atAge && ev.atAge < age + 1) {
                     const realFactor = ev.isNominal ? nominalDiscount : 1;
                     return total + ((ev.amount || 0) * realFactor);
                  }
@@ -1217,7 +1233,7 @@ function render(){
   const displayGrossB = (S.filingMode === 'Single' || S.filingMode === 'Head of Household') ? 0 : S.grossIncomeB;
   const taxes = householdTaxes(S, displayGrossA, displayGrossB, S.startTaxable, 0);
   const niitAmount = taxes.niitTax || 0;
-  // CA Mental Health Tax (already in brackets, computed here for display)
+  // CA Behavioral Health Services Tax, computed here for display
   // Year 0 = current year, no real-dollar discount
   const caMHAmount = computeCAMentalHealth(S, taxes.taxableIncomeCA, 0);
 
@@ -1649,15 +1665,15 @@ function render(){
           </div>
           <div class="note" style="margin-top:4px">Simple model: taxable brokerage income is estimated as yield × taxable balance, taxed as long-term capital gains federally, taxed as ordinary income by California, and used as the NIIT income base. NIIT thresholds are <b>nominal</b> (not CPI-indexed), so they shrink in real terms in projections.</div>
           <div class="row r2" style="margin-top:8px">
-            <div><label class="l">CA Mental Health Tax threshold</label><input class="t" id="caMHThreshold" type="text" inputmode="decimal" value="${S.caMentalHealthThreshold}"></div>
-            <div><label class="l">CA Mental Health Tax rate</label><div class="between"><input class="t" id="caMHRate" type="text" inputmode="decimal" value="${(S.caMentalHealthRate*100).toFixed(2)}"><span class="mut">%</span></div></div>
+            <div><label class="l">CA Behavioral Health Tax threshold</label><input class="t" id="caMHThreshold" type="text" inputmode="decimal" value="${S.caMentalHealthThreshold}"></div>
+            <div><label class="l">CA Behavioral Health Tax rate</label><div class="between"><input class="t" id="caMHRate" type="text" inputmode="decimal" value="${(S.caMentalHealthRate*100).toFixed(2)}"><span class="mut">%</span></div></div>
           </div>
-          <div class="note" style="margin-top:4px">CA Mental Health Services Tax (Prop 63): 1% on taxable income over $1M. This threshold is <b>nominal</b> (not CPI-indexed), so in projections it shrinks in real terms — more income becomes subject over time.</div>
+          <div class="note" style="margin-top:4px">CA Behavioral Health Services Tax (formerly Mental Health Services Tax): 1% on taxable income over $1M. This threshold is <b>nominal</b> (not CPI-indexed), so in projections it shrinks in real terms — more income becomes subject over time.</div>
         </div>
 
         <div class="mut" style="margin-top:12px;font-size:13px">
-          Federal ordinary taxable income: <b>${cur(taxes.taxableIncomeFed)}</b> · Federal LTCG brokerage income: <b>${cur(taxes.brokerageIncome)}</b> · Taxable income (CA): <b>${cur(taxes.taxableIncomeCA)}</b><br/>
-          Est. federal: <b>${cur(taxes.federalTax)}</b> · CA brackets: <b>${cur(taxes.stateTax)}</b>${caMHAmount > 0 ? ` · CA MH: <b>${cur(caMHAmount)}</b>` : ''} · Payroll: <b>${cur(taxes.payrollTax)}</b> · NIIT: <b>${cur(niitAmount)}</b><br/>
+          Federal ordinary taxable income: <b>${cur(taxes.taxableIncomeFed)}</b> · Federal taxable LTCG brokerage income: <b>${cur(taxes.taxableCapitalGainsFed ?? taxes.brokerageIncome)}</b> · Taxable income (CA): <b>${cur(taxes.taxableIncomeCA)}</b><br/>
+          Est. federal: <b>${cur(taxes.federalTax)}</b> · CA brackets: <b>${cur(taxes.stateTax)}</b>${caMHAmount > 0 ? ` · CA BH: <b>${cur(caMHAmount)}</b>` : ''} · Payroll: <b>${cur(taxes.payrollTax)}</b> · NIIT: <b>${cur(niitAmount)}</b><br/>
           Net income after all taxes: <b>${cur(netAfterAllTaxes)}</b>
         </div>
         <details id="tax-breakdown-details" ${S.showTaxBreakdown ? 'open' : ''}>
@@ -1676,7 +1692,7 @@ function render(){
                         <div class="label sub-value">${pct(b.rate)} bracket</div>
                         <div class="sub-value">${cur(b.taxOnAmount)}</div>
                     `).join('')}
-                    <div class="label">Taxable Brokerage Income (LTCG bucket)</div><div class="value">${cur(taxes.brokerageIncome)}</div>
+                    <div class="label">Taxable Brokerage Income (LTCG bucket)</div><div class="value">${cur(taxes.taxableCapitalGainsFed ?? taxes.brokerageIncome)}</div>
                     <div class="label">Federal Ordinary Tax</div><div class="value">${cur(taxes.federalOrdinaryTax)}</div>
                     <div class="label">Federal LTCG Tax</div><div class="value">${cur(taxes.federalCapitalGainsTax)}</div>
                     <div class="label total">Total Federal Tax</div><div class="value total">${cur(taxes.federalTax)}</div>
@@ -1692,11 +1708,11 @@ function render(){
                     `).join('')}
                     <div class="label total">CA Bracket Tax</div><div class="value total">${cur(taxes.stateTax)}</div>
 
-                    <div class="label" style="font-weight:700; grid-column: 1 / -1; margin-top: 8px;">CA Mental Health Services Tax</div>
+                    <div class="label" style="font-weight:700; grid-column: 1 / -1; margin-top: 8px;">CA Behavioral Health Services Tax</div>
                     <div class="label">Taxable income (CA)</div><div class="value">${cur(taxes.taxableIncomeCA)}</div>
                     <div class="label">Threshold (nominal, not CPI-indexed)</div><div class="value">${cur(S.caMentalHealthThreshold)}</div>
-                    <div class="label total">Mental Health Tax (${pct(S.caMentalHealthRate)})</div><div class="value total">${cur(caMHAmount)}</div>
-                    <div class="label total" style="margin-top:4px">Total CA Tax (brackets + MH)</div><div class="value total">${cur(taxes.stateTax + caMHAmount)}</div>
+                    <div class="label total">Behavioral Health Tax (${pct(S.caMentalHealthRate)})</div><div class="value total">${cur(caMHAmount)}</div>
+                    <div class="label total" style="margin-top:4px">Total CA Tax (brackets + BH)</div><div class="value total">${cur(taxes.stateTax + caMHAmount)}</div>
                 </div>
             </div>
         </details>
