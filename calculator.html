@@ -1,0 +1,2571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Early Retirement (FI) Calculator — Federal + California + 401(k) Caps</title>
+<style>
+  :root {
+    --bg1:#f8fafc; --bg2:#f1f5f9; --ink:#0f172a; --ink2:#1e293b; --mut:#64748b; --mut2:#94a3b8;
+    --line:#e2e8f0; --line2:#cbd5e1; --brand:#4f46e5; --brand-light:#eef2ff; --brand-hover:#4338ca;
+    --surface:#ffffff; --surface2:#f8fafc; --green:#059669; --red:#dc2626;
+    --radius:10px; --radius-lg:14px;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+    --shadow-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -2px rgba(0,0,0,.05);
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg2);color:var(--ink);font:14px/1.5 'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+
+  /* ── Layout ── */
+  .wrap{max-width:1280px;margin:0 auto;padding:24px 20px 48px}
+  h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+  .sub{color:var(--mut);margin-top:4px;font-size:13px;line-height:1.5}
+  .grid{display:grid;grid-template-columns:1fr 2fr;gap:20px;margin-top:20px;align-items:start}
+
+  /* ── Cards ── */
+  .card{border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow)}
+  .card .hd{padding:14px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:14px;letter-spacing:-.01em;color:var(--ink2);background:var(--surface2);border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+  .card .bd{padding:18px}
+
+  /* ── Grid helpers ── */
+  .row{display:grid;gap:12px}
+  .r2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .r3{grid-template-columns:repeat(3,minmax(0,1fr))}
+
+  /* ── Form elements ── */
+  label.l{font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;display:block}
+  input.t,select.s{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);font-size:13px;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+  input.t:focus,select.s:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-light)}
+  select.s{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+
+  /* ── Buttons ── */
+  button.btn,label.btn{padding:8px 14px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);cursor:pointer;text-align:center;font-size:13px;font-weight:500;color:var(--ink2);transition:all .15s}
+  button.btn:hover,label.btn:hover{background:var(--surface2);border-color:var(--line2)}
+  button.solid,label.solid{border-color:var(--brand);background:var(--brand);color:#fff;font-weight:600}
+  button.solid:hover,label.solid:hover{background:var(--brand-hover);border-color:var(--brand-hover)}
+  button.sm,label.sm{padding:5px 10px;font-size:12px}
+
+  /* ── Stat boxes ── */
+  .stat{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px 16px;box-shadow:var(--shadow-sm)}
+  .stat .k{font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
+  .stat .v{font-size:20px;font-weight:700;margin-top:4px;letter-spacing:-.01em;color:var(--ink)}
+
+  /* ── Tables ── */
+  table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  thead th{background:var(--surface2);text-align:left;padding:8px 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);border-bottom:2px solid var(--line)}
+  tbody td{border-top:1px solid var(--line);padding:7px 5px}
+  tbody tr:hover{background:#fafbfc}
+
+  /* ── Utilities ── */
+  .mut{color:var(--mut)}
+  .flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .between{display:flex;justify-content:space-between;align-items:center}
+  .note{font-size:12px;color:var(--mut);line-height:1.45}
+  .tabs{display:flex;gap:6px;margin-bottom:14px;background:var(--surface2);padding:4px;border-radius:var(--radius);border:1px solid var(--line)}
+  .tabs .btn{border:none;border-radius:8px;background:transparent;color:var(--mut);font-weight:500;flex:1}
+  .tabs .btn.solid{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm);border:none}
+
+  /* ── Charts ── */
+  .svgwrap{width:100%;height:280px;border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface)}
+
+  /* ── Details / Breakdown ── */
+  details>summary{list-style:none;cursor:pointer;color:var(--brand);font-size:12px;font-weight:600;padding:6px 0;transition:color .15s}
+  details>summary:hover{color:var(--brand-hover)}
+  details>summary::-webkit-details-marker{display:none}
+  details>summary::before{content:'▸ ';font-size:11px}
+  details[open]>summary::before{content:'▾ '}
+  .breakdown{background:var(--surface2);border-radius:var(--radius);padding:14px;margin-top:8px;font-size:12px;border:1px solid var(--line)}
+  .breakdown-grid{display:grid;grid-template-columns:1fr auto;gap:4px 16px}
+  .breakdown-grid .label{color:#475569}
+  .breakdown-grid .value{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+  .breakdown-grid .sub-value{text-align:right;font-size:11px;color:var(--mut)}
+  .breakdown-grid .total{border-top:2px solid var(--line);padding-top:6px;font-weight:700}
+  .tooltip-trigger{cursor:help;color:var(--mut2)}
+
+  /* ── Data tables ── */
+  .data-table-wrap{max-height:400px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--radius);margin-top:16px}
+
+  /* ── Section boxes (within cards) ── */
+  [style*="border:1px solid var(--line);border-radius:12px"],[style*="border:1px solid var(--line);border-radius:12px;padding:12px"]{
+    border-color:var(--line) !important;border-radius:var(--radius) !important;background:var(--surface2)
+  }
+
+  /* ── Drag & Drop ── */
+  tr.dragging{opacity:.4;background:var(--brand-light)}
+  .drop-indicator-top{border-top:2px solid var(--brand)}
+  .drop-indicator-bottom{border-bottom:2px solid var(--brand)}
+
+  /* ── Main top-level tabs ── */
+  .main-tabs{display:flex;gap:0;margin-top:20px;border-bottom:2px solid var(--line);position:sticky;top:0;z-index:10;background:var(--bg2);padding-top:4px}
+  .main-tabs .tab-btn{padding:12px 24px;border:none;background:none;font-size:14px;font-weight:600;color:var(--mut);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+  .main-tabs .tab-btn:hover{color:var(--ink)}
+  .main-tabs .tab-btn.active{color:var(--brand);border-bottom-color:var(--brand)}
+  .tab-content{margin-top:20px}
+  .tab-content .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  .nav-footer{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--line)}
+  .nav-footer .btn-lg{padding:12px 28px;font-size:14px;font-weight:600;border-radius:var(--radius);cursor:pointer;transition:all .15s}
+  .nav-footer .btn-next{background:var(--brand);color:#fff;border:none}
+  .nav-footer .btn-next:hover{background:var(--brand-hover)}
+  .nav-footer .btn-back{background:var(--surface);color:var(--ink2);border:1px solid var(--line)}
+  .nav-footer .btn-back:hover{background:var(--surface2)}
+
+  /* ── Responsive ── */
+  @media(max-width:980px){.tab-content .two-col{grid-template-columns:1fr}}
+
+  /* ── Number input spinners ── */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input[type="number"]{-moz-appearance:textfield;appearance:textfield}
+
+  /* ── Scrollbar styling ── */
+  .data-table-wrap::-webkit-scrollbar{width:6px}
+  .data-table-wrap::-webkit-scrollbar-track{background:transparent}
+  .data-table-wrap::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+  .data-table-wrap::-webkit-scrollbar-thumb:hover{background:var(--mut2)}
+
+  /* ── Tabular numbers for financial values ── */
+  .stat .v,td,input.t{font-variant-numeric:tabular-nums}
+
+  /* ── Percentage suffix styling ── */
+  .between > span.mut{font-size:12px;font-weight:500;color:var(--mut2);min-width:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:2px">
+    <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#7c3aed);display:flex;align-items:center;justify-content:center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><circle cx="12" cy="12" r="6"/></svg>
+    </div>
+    <h1>Early Retirement Calculator</h1>
+  </div>
+  <div class="sub">Zero-based budget → federal & CA taxes → savings → 401(k)/Mega caps → projections. All amounts in today's dollars (real).</div>
+
+  <div id="mainTabs" class="main-tabs"></div>
+  <div id="content" class="tab-content"></div>
+</div>
+
+<script>
+/* ===== Helpers ===== */
+const cur = x => (isFinite(x)? x:0).toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:0});
+const pct = x => `${(x*100).toFixed(1)}%`;
+const rnd2 = n => Math.round(n*100)/100;
+const safeNum = s => { if (typeof s!=='string') s=String(s??''); const v=Number(s.replace(/,/g,'').trim()); return Number.isFinite(v)? v:0; };
+const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
+const uid = ()=> (crypto.randomUUID? crypto.randomUUID(): Math.random().toString(36).slice(2));
+const setHTML = (el, html) => (el.innerHTML = html);
+const normalizeBracketUpTo = v => (v == null || !isFinite(v) ? Infinity : Number(v));
+
+/* ===== Income Resolution ===== */
+function resolveSchedule(schedule, baseIncome, targetAge) {
+  if (!schedule || schedule.length === 0) return baseIncome;
+  const sorted = [...schedule].sort((a, b) => a.age - b.age);
+  let income = baseIncome;
+  for (const entry of sorted) {
+    if (entry.age <= targetAge) income = entry.income;
+    else break;
+  }
+  return income;
+}
+function intervalOverlap(startA, endA, startB, endB) {
+  return Math.max(0, Math.min(endA, endB) - Math.max(startA, startB));
+}
+function applyWorkBreakIncome(income, age, breakStartAge, breakDurationYears) {
+  const breakStart = breakStartAge || 0;
+  const breakEnd = breakStart + Math.max(0, breakDurationYears || 0);
+  const overlap = intervalOverlap(age, age + 1, breakStart, breakEnd);
+  const breakFraction = clamp(overlap, 0, 1);
+  return income * (1 - breakFraction);
+}
+function resolveIncome(S, age) {
+  const isOneEarner = S.filingMode === 'Single' || S.filingMode === 'Head of Household';
+  const baseA = isOneEarner ? S.grossIncome : S.grossIncomeA;
+  const baseB = isOneEarner ? 0 : S.grossIncomeB;
+  let grossA, grossB;
+  if (S.incomeMode === 'nominal') {
+    const y = Math.max(0, age - S.currentAge);
+    const discount = 1 / Math.pow(1 + S.inflation, y);
+    grossA = baseA * discount;
+    grossB = baseB * discount;
+  } else if (S.incomeMode === 'growth') {
+    const y = Math.max(0, age - S.currentAge);
+    grossA = baseA * Math.pow(1 + (S.incomeRealGrowthA || 0), y);
+    grossB = baseB * Math.pow(1 + (S.incomeRealGrowthB || 0), y);
+  } else if (S.incomeMode === 'manual') {
+    grossA = resolveSchedule(S.incomeScheduleA, baseA, age);
+    grossB = isOneEarner ? 0 : resolveSchedule(S.incomeScheduleB, baseB, age);
+  } else {
+    grossA = baseA;
+    grossB = baseB;
+  }
+  if (S.workBreak.enabled) {
+    if (isOneEarner || S.workBreak.who === 'A') {
+      grossA = applyWorkBreakIncome(grossA, age, S.workBreak.atAge, S.workBreak.durationYears);
+    }
+    if (!isOneEarner && S.workBreak.who === 'B') {
+      grossB = applyWorkBreakIncome(grossB, age, S.workBreak.atAge, S.workBreak.durationYears);
+    }
+  }
+  if (S.earlyRetirement.enabled) {
+    if (S.earlyRetirement.who === 'A' && age >= S.earlyRetirement.atAge) grossA = 0;
+    if (S.earlyRetirement.who === 'B' && age >= S.earlyRetirement.atAge) grossB = 0;
+  }
+  return { grossA, grossB };
+}
+
+/* ===== NIIT (Net Investment Income Tax): 3.8% on lesser of investment income or MAGI above threshold ===== */
+/* Both NIIT thresholds and CA Mental Health threshold are NOMINAL (not inflation-indexed).
+   In the real-dollar framework, these thresholds shrink by 1/(1+inflation)^yearsOut. */
+function computeNIIT(S, wagesA, wagesB, investmentIncome, yearsOut) {
+  const invIncome = Math.max(0, investmentIncome || 0);
+  const realDiscount = Math.pow(1 + S.inflation, yearsOut || 0);
+
+  if (S.filingMode === 'Two Singles (Domestic Partners)') {
+    // Each partner files separately. Without asset ownership data, use wage share,
+    // and fall back to an even split when both partners have zero wages.
+    const totalWages = wagesA + wagesB;
+    const shareA = totalWages > 0 ? wagesA / totalWages : 0.5;
+    const shareB = totalWages > 0 ? wagesB / totalWages : 0.5;
+    const invA = invIncome * shareA, invB = invIncome * shareB;
+    const realThreshold = S.niitThresholdSingle / realDiscount;
+    const niitA = (S.niitRate||0) * Math.min(invA, Math.max(0, (wagesA + invA) - realThreshold));
+    const niitB = (S.niitRate||0) * Math.min(invB, Math.max(0, (wagesB + invB) - realThreshold));
+    return niitA + niitB;
+  }
+
+  const magi = (wagesA + wagesB) + invIncome;
+  const nominalThreshold = (S.filingMode === 'Married Filing Jointly') ? S.niitThresholdMFJ : S.niitThresholdSingle;
+  const realThreshold = nominalThreshold / realDiscount;
+  return (S.niitRate || 0) * Math.min(invIncome, Math.max(0, magi - realThreshold));
+}
+function taxableBrokerageIncomeAnnual(S, taxableBalance) {
+  return Math.max(0, taxableBalance || 0) * (S.estInvestmentYield || 0);
+}
+function allocateHouseholdInvestmentIncome(wagesA, wagesB, investmentIncome) {
+  const totalWages = wagesA + wagesB;
+  const shareA = totalWages > 0 ? wagesA / totalWages : 0.5;
+  return {
+    A: investmentIncome * shareA,
+    B: investmentIncome * (1 - shareA),
+  };
+}
+function computeCAMentalHealth(S, taxableIncomeCA, yearsOut) {
+  const realThreshold = (S.caMentalHealthThreshold || 1000000) / Math.pow(1 + S.inflation, yearsOut || 0);
+  return (S.caMentalHealthRate || 0) * Math.max(0, taxableIncomeCA - realThreshold);
+}
+
+/* ===== SALT Cap (2025: $40k base, phases out above $500k AGI at 30%, floor $10k) ===== */
+function effectiveSaltCap(S, agi) {
+  const reduction = S.saltCapPhaseoutRate * Math.max(0, agi - S.saltCapPhaseoutStart);
+  return Math.max(S.saltCapFloor, S.saltCapBase - reduction);
+}
+
+/* ===== Defaults (editable) ===== */
+const DEFAULT_FED = {
+  "Single":[{rate:0.10,upTo:11925},{rate:0.12,upTo:48475},{rate:0.22,upTo:103350},{rate:0.24,upTo:197300},{rate:0.32,upTo:250525},{rate:0.35,upTo:626350},{rate:0.37,upTo:Infinity}],
+  "Married Filing Jointly":[{rate:0.10,upTo:23850},{rate:0.12,upTo:96950},{rate:0.22,upTo:206700},{rate:0.24,upTo:394600},{rate:0.32,upTo:501050},{rate:0.35,upTo:751600},{rate:0.37,upTo:Infinity}],
+  "Head of Household":[{rate:0.10,upTo:17000},{rate:0.12,upTo:64850},{rate:0.22,upTo:103350},{rate:0.24,upTo:197300},{rate:0.32,upTo:250500},{rate:0.35,upTo:626350},{rate:0.37,upTo:Infinity}],
+};
+const DEFAULT_FED_LTCG = {
+  "Single":[{rate:0.00,upTo:48350},{rate:0.15,upTo:533400},{rate:0.20,upTo:Infinity}],
+  "Married Filing Jointly":[{rate:0.00,upTo:96700},{rate:0.15,upTo:600050},{rate:0.20,upTo:Infinity}],
+  "Head of Household":[{rate:0.00,upTo:64750},{rate:0.15,upTo:566700},{rate:0.20,upTo:Infinity}],
+};
+/* CA 2025 brackets (FTB 2025-540 rate schedules). Top regular rate is 12.3%.
+   The 1% Mental Health Services Tax (Prop 63, on income > $1M nominal) is computed separately
+   because its threshold is NOT inflation-indexed — it must shrink in real terms over time. */
+const DEFAULT_CA = {
+  "Single":[
+    {rate:0.01,upTo:11079},{rate:0.02,upTo:26264},{rate:0.04,upTo:41452},{rate:0.06,upTo:57542},
+    {rate:0.08,upTo:72724},{rate:0.093,upTo:371479},{rate:0.103,upTo:445771},
+    {rate:0.113,upTo:742953},{rate:0.123,upTo:Infinity}
+  ],
+  "Married Filing Jointly":[
+    {rate:0.01,upTo:22158},{rate:0.02,upTo:52528},{rate:0.04,upTo:82904},{rate:0.06,upTo:115084},
+    {rate:0.08,upTo:145448},{rate:0.093,upTo:742958},{rate:0.103,upTo:891542},
+    {rate:0.113,upTo:1485906},{rate:0.123,upTo:Infinity}
+  ],
+  "Head of Household":[
+    {rate:0.01,upTo:22173},{rate:0.02,upTo:52530},{rate:0.04,upTo:67716},{rate:0.06,upTo:83805},
+    {rate:0.08,upTo:98990},{rate:0.093,upTo:505208},{rate:0.103,upTo:606251},
+    {rate:0.113,upTo:1010417},{rate:0.123,upTo:Infinity}
+  ]
+};
+
+/* ===== App State ===== */
+function createDefaultState() {
+  return {
+    // core
+    currentAge:35, stressTest:false,
+    // filing mode
+    filingMode:"Married Filing Jointly", // "Single" | "Married Filing Jointly" | "Two Singles (Domestic Partners)"
+    // incomes & employee pre-tax (entered by user)
+    grossIncome:220000, preTaxContrib:0,
+    grossIncomeA:140000, preTaxContribA:0,
+    grossIncomeB:80000,  preTaxContribB:0,
+    // NEW: Early retirement scenario
+    earlyRetirement: {
+      enabled: false,
+      who: 'A', // 'A' or 'B'
+      atAge: 55,
+    },
+    workBreak: {
+      enabled: false,
+      who: 'A', // 'A' or 'B'
+      atAge: 40,
+      durationYears: 1,
+    },
+    // Income projection (real growth above inflation)
+    incomeMode: "fixed", // "fixed" | "growth" | "manual"
+    incomeRealGrowthA: 0, incomeRealGrowthB: 0,
+    incomeScheduleA: [], incomeScheduleB: [], // [{id, age, income}]
+    // standard deductions (federal + CA)
+    stdDedSingle:15750, stdDedMFJ:31500, stdDedHoH:23625,
+    stdDedCA_Single:5706, stdDedCA_MFJ:11412, stdDedCA_HoH:11412,
+    // deduction type: "standard" or "itemized"
+    fedDeductionType:"standard", caDeductionType:"standard",
+    fedItemizedAmount:40000, caItemizedAmount:0, // fed default = SALT cap ($40k for 2025, phases out above $500k AGI)
+    // per-partner deduction overrides (Domestic Partners — each files own federal return)
+    fedDeductionTypeA:"standard", fedDeductionTypeB:"standard",
+    fedItemizedAmountA:40000, fedItemizedAmountB:40000,
+    saltCapBase:40000, saltCapPhaseoutStart:500000, saltCapPhaseoutRate:0.30, saltCapFloor:10000,
+    // per-partner federal filing status (for Domestic Partners mode)
+    federalFilingA:"Single", federalFilingB:"Single",
+    // payroll taxes (split SS / Medicare / Additional Medicare)
+    ssRate:0.062, ssCap:176100,
+    medicareRate:0.0145,
+    addlMedicareRate:0.009, addlMedicareThresholdSingle:200000, addlMedicareThresholdMFJ:250000,
+    // NIIT (Net Investment Income Tax)
+    niitRate:0.038, niitThresholdSingle:200000, niitThresholdMFJ:250000,
+    estInvestmentYield:0.02, // estimated annual taxable brokerage income yield
+    // CA Mental Health Services Tax (already in brackets as 13.3% top rate; threshold for display)
+    caMentalHealthThreshold:1000000, caMentalHealthRate:0.01,
+    // brackets
+    fedBrackets: structuredClone(DEFAULT_FED), fedView:"Married Filing Jointly",
+    fedCapitalGainsBrackets: structuredClone(DEFAULT_FED_LTCG), fedCapitalGainsView:"Married Filing Jointly",
+    caBrackets: structuredClone(DEFAULT_CA), caView:"Married Filing Jointly",
+    // budget (unified)
+    budget:[], cutWants:false,
+    // healthcare (moved from events)
+    medicareAge:65, preMedicareMonthly:800, postMedicareMonthly:450,
+    // portfolio & allocations
+    startTaxable:100000, startDeferred:100000, startRoth:50000,
+    matchRate:0.5, matchUpToSalaryPct:0.06, // employer match policy
+    // 401k/Mega caps (editable)
+    limitEmployeeDeferral:23500, // per person
+    limitOverall401k:70000,      // per person (includes employee+match+after-tax/mega)
+    // market
+    retTaxable:0.07, retDeferred:0.07, retRoth:0.07, taxDragTaxable:0.006,
+    volatility:0.15, inflation:0.03, withdrawalRate:0.035, retireTaxRateDeferred:0.15,
+    // retirement spend override
+    retirementAnnualSpend:undefined,
+    // UI
+    tab:"income",
+    showTaxBreakdown: false,
+    showSavingsBreakdown: false,
+    projectionCutoffAge: 65,
+  };
+}
+let S = createDefaultState();
+
+
+/* ===== Load/Save to File ===== */
+function saveToFile() {
+  try {
+    // Use null, 2 for pretty-printing the JSON file
+    const stateString = JSON.stringify(S, null, 2);
+    const blob = new Blob([stateString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fi-calculator-state.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error("Failed to save state to file:", e);
+    // In a real app, you might want a user-facing error message here.
+  }
+}
+
+function handleFileLoad(event) {
+  const file = event.target.files[0];
+  if (!file) {
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const text = e.target.result;
+      let loadedS = JSON.parse(text);
+
+      // --- Backward Compatibility Logic ---
+      // This ensures that if you load a file from an older version,
+      // it won't crash the app if fields are missing.
+      
+      // Example Migration: If old 'events' array exists, merge it into 'budget'
+      if (loadedS.events && Array.isArray(loadedS.events) && loadedS.events.length > 0) {
+        loadedS.budget = [...(loadedS.budget || []), ...loadedS.events];
+        delete loadedS.events;
+      }
+      // Migrate old payroll fields to split SS/Medicare
+      if (loadedS.payrollRate != null && loadedS.ssRate == null) {
+        loadedS.ssRate = 0.062;
+        loadedS.ssCap = loadedS.payrollCap || 176100;
+        loadedS.medicareRate = 0.0145;
+        loadedS.addlMedicareRate = 0.009;
+        loadedS.addlMedicareThresholdSingle = 200000;
+        loadedS.addlMedicareThresholdMFJ = 250000;
+      }
+      delete loadedS.payrollRate;
+      delete loadedS.payrollCap;
+      delete loadedS.addlPayrollRateAboveCap;
+      // Migrate MFJ single preTaxContrib to per-person
+      if (loadedS.filingMode === 'Married Filing Jointly' && loadedS.preTaxContribA == null && loadedS.preTaxContrib) {
+        loadedS.preTaxContribA = Math.round(loadedS.preTaxContrib / 2);
+        loadedS.preTaxContribB = loadedS.preTaxContrib - loadedS.preTaxContribA;
+      }
+      // Add Head of Household brackets if missing (added in newer version)
+      if (loadedS.fedBrackets && !loadedS.fedBrackets["Head of Household"]) {
+        loadedS.fedBrackets["Head of Household"] = structuredClone(DEFAULT_FED["Head of Household"]);
+      }
+      if (loadedS.fedCapitalGainsBrackets && !loadedS.fedCapitalGainsBrackets["Head of Household"]) {
+        loadedS.fedCapitalGainsBrackets["Head of Household"] = structuredClone(DEFAULT_FED_LTCG["Head of Household"]);
+      }
+      if (loadedS.caBrackets && !loadedS.caBrackets["Head of Household"]) {
+        loadedS.caBrackets["Head of Household"] = structuredClone(DEFAULT_CA["Head of Household"]);
+      }
+      // Delete other obsolete keys if they exist in the loaded file
+      delete loadedS.allocTaxable;
+      delete loadedS.allocDeferred;
+      delete loadedS.allocRoth;
+      
+      // Merge the loaded state on top of the current version's default state.
+      // This adds any new fields from the current app version with their defaults.
+      S = { ...createDefaultState(), ...loadedS };
+
+      // Restore serialized Infinity bracket caps (saved as null in JSON) and normalize ordering.
+      Object.keys(S.fedBrackets || {}).forEach(k => {
+        S.fedBrackets[k] = (S.fedBrackets[k] || []).map(b => ({ ...b, upTo: normalizeBracketUpTo(b.upTo) }));
+        fixBrackets(S.fedBrackets, k);
+      });
+      Object.keys(S.fedCapitalGainsBrackets || {}).forEach(k => {
+        S.fedCapitalGainsBrackets[k] = (S.fedCapitalGainsBrackets[k] || []).map(b => ({ ...b, upTo: normalizeBracketUpTo(b.upTo) }));
+        fixBrackets(S.fedCapitalGainsBrackets, k);
+      });
+      Object.keys(S.caBrackets || {}).forEach(k => {
+        S.caBrackets[k] = (S.caBrackets[k] || []).map(b => ({ ...b, upTo: normalizeBracketUpTo(b.upTo) }));
+        fixBrackets(S.caBrackets, k);
+      });
+
+      // Ask whether to keep saved tax brackets or use current defaults
+      const hasSavedBrackets = loadedS.fedBrackets || loadedS.caBrackets;
+      const hasSavedDeductions = loadedS.stdDedSingle != null || loadedS.stdDedMFJ != null;
+      const hasSavedLimits = loadedS.limitEmployeeDeferral != null || loadedS.ssCap != null;
+      if (hasSavedBrackets || hasSavedDeductions || hasSavedLimits) {
+        const useDefaults = confirm(
+          "This save file contains tax brackets, deductions, and/or contribution limits that may be from an older tax year.\n\n" +
+          "Click OK to replace them with the current defaults (2025 values).\n" +
+          "Click Cancel to keep the values from the save file."
+        );
+        if (useDefaults) {
+          const defaults = createDefaultState();
+          S.fedBrackets = defaults.fedBrackets;
+          S.fedCapitalGainsBrackets = defaults.fedCapitalGainsBrackets;
+          S.caBrackets = defaults.caBrackets;
+          S.stdDedSingle = defaults.stdDedSingle;
+          S.stdDedMFJ = defaults.stdDedMFJ;
+          S.stdDedHoH = defaults.stdDedHoH;
+          S.stdDedCA_Single = defaults.stdDedCA_Single;
+          S.stdDedCA_MFJ = defaults.stdDedCA_MFJ;
+          S.stdDedCA_HoH = defaults.stdDedCA_HoH;
+          S.limitEmployeeDeferral = defaults.limitEmployeeDeferral;
+          S.limitOverall401k = defaults.limitOverall401k;
+          S.ssRate = defaults.ssRate;
+          S.ssCap = defaults.ssCap;
+          S.medicareRate = defaults.medicareRate;
+          S.addlMedicareRate = defaults.addlMedicareRate;
+          S.addlMedicareThresholdSingle = defaults.addlMedicareThresholdSingle;
+          S.addlMedicareThresholdMFJ = defaults.addlMedicareThresholdMFJ;
+        }
+      }
+
+      render();
+    } catch (err) {
+      console.error("Failed to load or parse file:", err);
+      // You could show a user-facing error message here.
+    }
+  };
+  reader.readAsText(file);
+  // Reset file input to allow loading the same file again if needed
+  event.target.value = '';
+}
+
+
+/* ===== Caret-preserving re-render (fixed) ===== */
+function preserveCaret(doRender) {
+  const el = document.activeElement;
+  const isField = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.tagName === 'SUMMARY');
+
+  const keep = isField ? {
+    name: el.getAttribute?.('name') || el.id || null,
+    start: (el.selectionStart ?? (el.value?.length ?? 0)),
+    end: (el.selectionEnd ?? (el.value?.length ?? 0)),
+    dir: el.selectionDirection || 'none'
+  } : null;
+
+  doRender();
+  if (!keep || !keep.name) return;
+
+  const target = document.querySelector(`[name="${keep.name}"]`) || document.getElementById(keep.name);
+  if (!target) return;
+
+  target.focus({ preventScroll:true });
+  try {
+    // For selects/summary, focus is enough. For text inputs, restore selection.
+    if (target.tagName === 'INPUT') {
+      const len = target.value?.length ?? 0;
+      target.setSelectionRange(Math.min(keep.start,len), Math.min(keep.end,len), keep.dir);
+    }
+  } catch {}
+}
+
+/* ===== Taxes ===== */
+function cappedEmployeeDeferralAnnual(deferralAnnual, incomeAnnual, limitEmployeeDeferral) {
+  return Math.max(0, Math.min(deferralAnnual || 0, incomeAnnual || 0, limitEmployeeDeferral || Infinity));
+}
+
+function calcTax(brackets, taxable){
+  let rem = Math.max(0, taxable), prev = 0, total = 0;
+  const byBracket = [];
+  for(const b of brackets){
+    const cap = normalizeBracketUpTo(b.upTo);
+    const amountInBracket = Math.max(0, Math.min(rem, cap - prev));
+    if (amountInBracket > 0.01) { // Only add bracket if there's meaningful income
+      const taxOnAmount = amountInBracket * (isFinite(b.rate) ? b.rate : 0);
+      total += taxOnAmount;
+      byBracket.push({
+        rate: b.rate,
+        upTo: b.upTo,
+        amountInBracket,
+        taxOnAmount
+      });
+    }
+    rem -= amountInBracket;
+    prev = cap;
+    if(rem <= 0) break;
+  }
+  return { total: Math.max(0, total), byBracket };
+}
+
+function calcStackedCapitalGainsTax(brackets, ordinaryTaxableIncome, capitalGainsIncome) {
+  const ordinary = Math.max(0, ordinaryTaxableIncome || 0);
+  const gains = Math.max(0, capitalGainsIncome || 0);
+  const totalTaxable = ordinary + gains;
+  let prev = 0;
+  let total = 0;
+  const byBracket = [];
+  for (const b of brackets) {
+    const cap = normalizeBracketUpTo(b.upTo);
+    const amountInBracket = Math.max(0, Math.min(totalTaxable, cap) - Math.max(ordinary, prev));
+    if (amountInBracket > 0.01) {
+      const taxOnAmount = amountInBracket * (isFinite(b.rate) ? b.rate : 0);
+      total += taxOnAmount;
+      byBracket.push({ rate: b.rate, upTo: b.upTo, amountInBracket, taxOnAmount });
+    }
+    prev = cap;
+    if (cap >= totalTaxable) break;
+  }
+  return { total, byBracket };
+}
+
+/* Domestic Partners rule: Federal = two Singles (or HoH); CA = MFJ on combined */
+function householdTaxes(S, currentGrossA, currentGrossB, taxableBalance=0, yearsOut=0){
+  const fed = S.fedBrackets, cab = S.caBrackets;
+  const grossA = currentGrossA;
+  const grossB = currentGrossB;
+  const brokerageIncome = taxableBrokerageIncomeAnnual(S, taxableBalance);
+
+  /* Per-person tax helper. Payroll is computed on GROSS (not wages), because
+      401(k) deferrals reduce income tax but NOT FICA. */
+  function singleTaxes(gross, preTax, brokerageIncomeShare, stdFed, fedBr, fedCgBr, stdCA, caBr, S, addlMedicareThreshold){
+    const wages = Math.max(0, gross - preTax);
+    const taxableFed = Math.max(0, wages - stdFed);
+    const taxableCA  = Math.max(0, wages + brokerageIncomeShare - stdCA);
+    const fedTaxRes = calcTax(fedBr, taxableFed);
+    const fedCgRes = calcStackedCapitalGainsTax(fedCgBr, taxableFed, brokerageIncomeShare);
+    const caTaxRes  = calcTax(caBr, taxableCA);
+    const niit = computeNIIT(S, wages, 0, brokerageIncomeShare, yearsOut);
+    const ss = S.ssRate * Math.min(gross, S.ssCap);
+    const medicare = S.medicareRate * gross;
+    const addlMedicare = S.addlMedicareRate * Math.max(0, gross - addlMedicareThreshold);
+    const payroll = ss + medicare + addlMedicare;
+    const federalTax = fedTaxRes.total + fedCgRes.total;
+    const net = gross + brokerageIncomeShare - preTax - (federalTax + caTaxRes.total + payroll + niit);
+    return {
+      wages,
+      net,
+      fed: federalTax,
+      fedOrdinaryTax: fedTaxRes.total,
+      fedCapitalGainsTax: fedCgRes.total,
+      state: caTaxRes.total,
+      niit,
+      payroll,
+      taxableFed,
+      taxableCA,
+      brokerageIncome: brokerageIncomeShare,
+      fedBreakdown: fedTaxRes.byBracket,
+      fedCapitalGainsBreakdown: fedCgRes.byBracket,
+      caBreakdown: caTaxRes.byBracket
+    };
+  }
+
+  if (S.filingMode === "Two Singles (Domestic Partners)") {
+    const preTaxA = cappedEmployeeDeferralAnnual(S.preTaxContribA, grossA, S.limitEmployeeDeferral);
+    const preTaxB = cappedEmployeeDeferralAnnual(S.preTaxContribB, grossB, S.limitEmployeeDeferral);
+    const stdFedA = S.fedDeductionTypeA === 'itemized' ? (S.fedItemizedAmountA||0)
+      : (S.federalFilingA === "Head of Household" ? S.stdDedHoH : S.stdDedSingle);
+    const stdFedB = S.fedDeductionTypeB === 'itemized' ? (S.fedItemizedAmountB||0)
+      : (S.federalFilingB === "Head of Household" ? S.stdDedHoH : S.stdDedSingle);
+    const fedBrA = fed[S.federalFilingA] || fed.Single;
+    const fedBrB = fed[S.federalFilingB] || fed.Single;
+    const fedCgBrA = S.fedCapitalGainsBrackets[S.federalFilingA] || DEFAULT_FED_LTCG[S.federalFilingA] || DEFAULT_FED_LTCG.Single;
+    const fedCgBrB = S.fedCapitalGainsBrackets[S.federalFilingB] || DEFAULT_FED_LTCG[S.federalFilingB] || DEFAULT_FED_LTCG.Single;
+    const caPerPerson = S.caDeductionType === 'itemized' ? (S.caItemizedAmount||0) : S.stdDedCA_Single;
+    const brokerageSplit = allocateHouseholdInvestmentIncome(Math.max(0, grossA - preTaxA), Math.max(0, grossB - preTaxB), brokerageIncome);
+    const A = singleTaxes(grossA, preTaxA, brokerageSplit.A, stdFedA, fedBrA, fedCgBrA, caPerPerson, cab.Single, S, S.addlMedicareThresholdSingle);
+    const B = singleTaxes(grossB, preTaxB, brokerageSplit.B, stdFedB, fedBrB, fedCgBrB, caPerPerson, cab.Single, S, S.addlMedicareThresholdSingle);
+    const wagesCACombined = Math.max(0, (A.wages || 0) + (B.wages || 0)) + brokerageIncome;
+    const caCombinedDed = S.caDeductionType === 'itemized' ? (S.caItemizedAmount||0) : S.stdDedCA_MFJ;
+    const taxableCACombined = Math.max(0, wagesCACombined - caCombinedDed);
+    const caTaxCombinedRes = calcTax(cab["Married Filing Jointly"], taxableCACombined);
+    const payrollCombined = (A.payroll || 0) + (B.payroll || 0);
+    const grossTotal = grossA + grossB;
+    const federalTax = (A.fed||0) + (B.fed||0);
+    const stateTax   = caTaxCombinedRes.total;
+    const niitTax = (A.niit||0) + (B.niit||0);
+    const preTaxTotal = preTaxA + preTaxB;
+    const netIncome  = grossTotal + brokerageIncome - preTaxTotal - (federalTax + stateTax + payrollCombined + niitTax);
+
+    return {
+      netIncome, federalTax, stateTax, payrollTax: payrollCombined, niitTax,
+      federalOrdinaryTax: (A.fedOrdinaryTax||0) + (B.fedOrdinaryTax||0),
+      federalCapitalGainsTax: (A.fedCapitalGainsTax||0) + (B.fedCapitalGainsTax||0),
+      taxableIncomeFed: (A.taxableFed||0)+(B.taxableFed||0), taxableIncomeCA: taxableCACombined,
+      grossTotal, preTaxTotal,
+      brokerageIncome,
+      wagesA: A.wages||0, wagesB: B.wages||0,
+      fedBreakdown: { A: A.fedBreakdown, B: B.fedBreakdown },
+      fedCapitalGainsBreakdown: { A: A.fedCapitalGainsBreakdown, B: B.fedCapitalGainsBreakdown },
+      caBreakdown: caTaxCombinedRes.byBracket,
+    };
+  }
+
+  // Single, Head of Household, or MFJ
+  const isMFJ = S.filingMode === "Married Filing Jointly";
+  const currentGross = grossA + grossB;
+  const preTaxA = isMFJ ? cappedEmployeeDeferralAnnual(S.preTaxContribA, grossA, S.limitEmployeeDeferral) : 0;
+  const preTaxB = isMFJ ? cappedEmployeeDeferralAnnual(S.preTaxContribB, grossB, S.limitEmployeeDeferral) : 0;
+  const preTaxTotal = isMFJ ? (preTaxA + preTaxB) : cappedEmployeeDeferralAnnual(S.preTaxContrib, currentGross, S.limitEmployeeDeferral);
+  const wages = Math.max(0, currentGross - preTaxTotal);
+  const stdFed = S.fedDeductionType === 'itemized' ? (S.fedItemizedAmount||0)
+               : S.filingMode==="Single" ? S.stdDedSingle
+               : S.filingMode==="Head of Household" ? S.stdDedHoH
+               : S.stdDedMFJ;
+  const stdCA  = S.caDeductionType === 'itemized' ? (S.caItemizedAmount||0)
+               : S.filingMode==="Single" ? S.stdDedCA_Single
+               : S.filingMode==="Head of Household" ? S.stdDedCA_HoH
+               : S.stdDedCA_MFJ;
+  const taxableFed = Math.max(0, wages - stdFed);
+  const taxableCA  = Math.max(0, wages + brokerageIncome - stdCA);
+  const wagesA = isMFJ ? Math.max(0, grossA - preTaxA) : wages;
+  const wagesB = isMFJ ? Math.max(0, grossB - preTaxB) : 0;
+  const federalRes = calcTax(fed[S.filingMode], taxableFed);
+  const federalCgRes = calcStackedCapitalGainsTax(S.fedCapitalGainsBrackets[S.filingMode] || DEFAULT_FED_LTCG[S.filingMode], taxableFed, brokerageIncome);
+  const caRes  = calcTax(cab[S.filingMode], taxableCA);
+  const niitTax = computeNIIT(S, wagesA, wagesB, brokerageIncome, yearsOut);
+
+  // Payroll: SS is per-person (each has own wage cap). Medicare on total gross.
+  const ssA = S.ssRate * Math.min(grossA, S.ssCap);
+  const ssB = S.ssRate * Math.min(grossB, S.ssCap);
+  const baseMedicare = S.medicareRate * currentGross;
+  const addlMedicareThreshold = isMFJ ? S.addlMedicareThresholdMFJ : S.addlMedicareThresholdSingle;
+  const addlMedicare = S.addlMedicareRate * Math.max(0, currentGross - addlMedicareThreshold);
+  const payroll = ssA + ssB + baseMedicare + addlMedicare;
+
+  return {
+    netIncome: currentGross + brokerageIncome - preTaxTotal - (federalRes.total + federalCgRes.total + caRes.total + payroll + niitTax),
+    federalTax: federalRes.total + federalCgRes.total, stateTax: caRes.total, payrollTax: payroll, niitTax,
+    federalOrdinaryTax: federalRes.total, federalCapitalGainsTax: federalCgRes.total,
+    taxableIncomeFed: taxableFed, taxableIncomeCA: taxableCA,
+    grossTotal: currentGross, preTaxTotal: preTaxTotal,
+    brokerageIncome,
+    wagesA, wagesB,
+    fedBreakdown: federalRes.byBracket, fedCapitalGainsBreakdown: federalCgRes.byBracket, caBreakdown: caRes.byBracket
+  };
+}
+
+
+/* ===== Allocations & 401(k) Caps ===== */
+/* Calculate employer match (annual dollars) against employee deferral */
+function employerMatchAnnual(incomeAnnual, employeeDefAnnual, matchRate, matchUpToPct){
+  const cap = incomeAnnual * matchUpToPct;
+  const eligible = Math.min(Math.max(0, employeeDefAnnual || 0), Math.max(0, cap));
+  return eligible * matchRate;
+}
+
+/* Logic is now simplified to prioritize filling after-tax 401k space (Roth) first. */
+function capPerPerson401k({incomeAnnual, monthlySavingsShare, employeeDefAnnual, matchRate, matchUpToPct, limitEmployeeDeferral, limitOverall401k}){
+  // Enforce employee deferral limit
+  const employeeDefUsed = cappedEmployeeDeferralAnnual(employeeDefAnnual, incomeAnnual, limitEmployeeDeferral);
+
+  // Employer match estimate (annual)
+  const matchAnnual = employerMatchAnnual(incomeAnnual, employeeDefUsed, matchRate, matchUpToPct);
+
+  // Remaining overall 401k capacity (annual) for after-tax contributions
+  const remainingOverallAnnual = Math.max(0, limitOverall401k - (employeeDefUsed + matchAnnual));
+  const remainingOverallMonthly = remainingOverallAnnual / 12;
+
+  // Prioritize filling Roth space with available monthly savings
+  const monthlyRoth = Math.min(monthlySavingsShare, remainingOverallMonthly);
+
+  // The rest of the savings go to the taxable account
+  const monthlyTaxable = Math.max(0, monthlySavingsShare - monthlyRoth);
+
+  return {
+    monthlyDeferred: 0, // After-tax deferred is not a separate allocation
+    monthlyRoth,
+    monthlyTaxable,
+    monthlyMatch: matchAnnual/12
+  };
+}
+
+/* Household allocation wrapper. Returns negative monthlySavings when expenses > income (deficit). */
+function allocateWithCaps(S, netIncomeAnnual, wagesA, wagesB, monthlyBaseExp, currentGrossA, currentGrossB){
+    const monthlyBase = monthlyBaseExp;
+    const monthlySavings = netIncomeAnnual / 12 - monthlyBase; // can be negative (deficit)
+    const isOneEarner = S.filingMode === 'Single' || S.filingMode === 'Head of Household';
+    const currentGross = currentGrossA + currentGrossB;
+    const preTaxSingle = cappedEmployeeDeferralAnnual(S.preTaxContrib, currentGross, S.limitEmployeeDeferral);
+    const preTaxA = cappedEmployeeDeferralAnnual(S.preTaxContribA, currentGrossA, S.limitEmployeeDeferral);
+    const preTaxB = cappedEmployeeDeferralAnnual(S.preTaxContribB, currentGrossB, S.limitEmployeeDeferral);
+
+    const limits = { limitEmployeeDeferral: S.limitEmployeeDeferral, limitOverall401k: S.limitOverall401k };
+    const result = { mTaxable: 0, mDeferred: 0, mRoth: 0, mMatch: 0, monthlySavings };
+
+    // Deficit: expenses exceed income — withdraw from taxable account, no 401k/Roth allocation
+    if (monthlySavings < 0) {
+        result.mTaxable = monthlySavings; // negative = withdrawal
+        // Employer match still happens on pre-tax contributions even in deficit years
+        const matchA = employerMatchAnnual(currentGrossA, isOneEarner ? preTaxSingle : preTaxA, S.matchRate, S.matchUpToSalaryPct);
+        const matchB = isOneEarner ? 0 : employerMatchAnnual(currentGrossB, preTaxB, S.matchRate, S.matchUpToSalaryPct);
+        result.mMatch = (matchA + matchB) / 12;
+        return result;
+    }
+
+    if (S.filingMode === "Two Singles (Domestic Partners)") {
+        const totalWages = Math.max(0.0001, wagesA + wagesB);
+        const shareA = totalWages > 0 ? wagesA / totalWages : 0.5;
+        const shareB = totalWages > 0 ? wagesB / totalWages : 0.5;
+        const mA = shareA * monthlySavings, mB = shareB * monthlySavings;
+
+        const A = capPerPerson401k({
+            incomeAnnual: currentGrossA,
+            monthlySavingsShare: mA,
+            employeeDefAnnual: preTaxA,
+            matchRate: S.matchRate,
+            matchUpToPct: S.matchUpToSalaryPct,
+            ...limits
+        });
+        const B = capPerPerson401k({
+            incomeAnnual: currentGrossB,
+            monthlySavingsShare: mB,
+            employeeDefAnnual: preTaxB,
+            matchRate: S.matchRate,
+            matchUpToPct: S.matchUpToSalaryPct,
+            ...limits
+        });
+
+        result.mTaxable = A.monthlyTaxable + B.monthlyTaxable;
+        result.mRoth = A.monthlyRoth + B.monthlyRoth;
+        result.mMatch = A.monthlyMatch + B.monthlyMatch;
+        return result;
+    }
+
+    // MFJ — per-person 401(k) limits (each spouse has own caps)
+    if (S.filingMode === "Married Filing Jointly") {
+        const totalWages = Math.max(0.0001, wagesA + wagesB);
+        const shareA = wagesA / totalWages;
+        const shareB = wagesB / totalWages;
+        const mA = shareA * monthlySavings, mB = shareB * monthlySavings;
+        const A = capPerPerson401k({
+            incomeAnnual: currentGrossA,
+            monthlySavingsShare: mA,
+            employeeDefAnnual: preTaxA,
+            matchRate: S.matchRate,
+            matchUpToPct: S.matchUpToSalaryPct,
+            ...limits
+        });
+        const B = capPerPerson401k({
+            incomeAnnual: currentGrossB,
+            monthlySavingsShare: mB,
+            employeeDefAnnual: preTaxB,
+            matchRate: S.matchRate,
+            matchUpToPct: S.matchUpToSalaryPct,
+            ...limits
+        });
+        result.mTaxable = A.monthlyTaxable + B.monthlyTaxable;
+        result.mRoth = A.monthlyRoth + B.monthlyRoth;
+        result.mMatch = A.monthlyMatch + B.monthlyMatch;
+        return result;
+    }
+
+    // Single / Head of Household
+    const cap = capPerPerson401k({
+        incomeAnnual: currentGross,
+        monthlySavingsShare: monthlySavings,
+        employeeDefAnnual: preTaxSingle,
+        matchRate: S.matchRate,
+        matchUpToPct: S.matchUpToSalaryPct,
+        ...limits
+    });
+    result.mTaxable = cap.monthlyTaxable;
+    result.mRoth = cap.monthlyRoth;
+    result.mMatch = cap.monthlyMatch;
+    return result;
+}
+
+/* ===== FI Math ===== */
+function preFiMonthly(budget, currentAge, monthsPreFI){
+  if(!budget.length || monthsPreFI <= 0) return 0;
+  const endAge=currentAge+monthsPreFI/12; let recur=0, once=0;
+  for(const ev of budget){
+    if(ev.kind==="Recurring" && ev.startAge!=null && ev.endAge!=null){
+      const a0=Math.max(currentAge, ev.startAge), a1=Math.min(endAge, ev.endAge);
+      if(a1>a0) recur += (ev.amount||0) * Math.round((a1-a0)*12)/monthsPreFI;
+    }else if(ev.kind==="One-time" && ev.atAge!=null){
+      if(ev.atAge>=currentAge && ev.atAge<endAge) once += ev.amount||0;
+    }
+  }
+  return recur + once/monthsPreFI;
+}
+const retireMonthly = budget => budget.reduce((s,e)=> s + (e.kind==="RetirementRecurring" ? (e.amount||0) : 0), 0);
+
+function yearsToFI_detailed({
+  S, retireSpendBaseToday, budgetOverride
+}) {
+    const budget = budgetOverride || S.budget;
+    const target = retireSpendBaseToday / Math.max(0.0001, S.withdrawalRate);
+    let bT = S.startTaxable, bD = S.startDeferred, bR = S.startRoth;
+    const taxableNetNominalReturn = S.retTaxable - (S.estInvestmentYield || 0) - S.taxDragTaxable;
+    const rT = Math.pow(((1 + taxableNetNominalReturn) / (1 + S.inflation) - 1) + 1, 1 / 12) - 1;
+    const rD = Math.pow(((1 + S.retDeferred) / (1 + S.inflation) - 1) + 1, 1 / 12) - 1;
+    const rR = Math.pow(((1 + S.retRoth) / (1 + S.inflation) - 1) + 1, 1 / 12) - 1;
+
+    let lastAllocResult = {};
+    let lastMonthlyPreTax = 0;
+    let lastMonthlySavings = 0;
+
+    for (let y = 0; y <= 60; y++) {
+        const currentAge = S.currentAge + y;
+        const nominalDiscount = 1 / Math.pow(1 + S.inflation, y);
+        let yearGrossA, yearGrossB;
+
+        const income = resolveIncome(S, currentAge);
+        yearGrossA = income.grossA;
+        yearGrossB = income.grossB;
+
+        const taxes = householdTaxes(S, yearGrossA, yearGrossB, bT, y);
+        const mhTax = computeCAMentalHealth(S, taxes.taxableIncomeCA, y);
+        const netAfterTaxes = taxes.netIncome - mhTax;
+
+        // Compute monthly expenses with nominal discount and age-range filtering
+        const monthlyBase = budget
+            .filter(b => S.cutWants ? b.kind === "Need" : (b.kind === "Need" || b.kind === "Want"))
+            .reduce((s, r) => {
+                if (r.startAge != null && currentAge < r.startAge) return s;
+                if (r.endAge != null && currentAge >= r.endAge) return s;
+                return s + (r.amount || 0) * (r.isNominal ? nominalDiscount : 1);
+            }, 0);
+        const monthlyEvents = budget.reduce((total, ev) => {
+            let cost = 0;
+            if (ev.kind === "Recurring" && ev.startAge != null && ev.endAge != null
+                && currentAge >= ev.startAge && currentAge < ev.endAge) {
+                cost = ev.amount || 0;
+            } else if (ev.kind === "One-time" && ev.atAge != null
+                && currentAge <= ev.atAge && ev.atAge < currentAge + 1) {
+                cost = (ev.amount || 0) / 12;
+            }
+            return total + cost * (ev.isNominal ? nominalDiscount : 1);
+        }, 0);
+        const monthlyExp = monthlyBase + monthlyEvents;
+
+        const allocRes = allocateWithCaps(S, netAfterTaxes, taxes.wagesA || 0, taxes.wagesB || 0, monthlyExp, yearGrossA, yearGrossB);
+        const monthlyPreTaxTotal = (taxes.preTaxTotal || 0) / 12;
+
+        if (y === 0) {
+            lastAllocResult = allocRes;
+            lastMonthlyPreTax = monthlyPreTaxTotal;
+            lastMonthlySavings = allocRes.monthlySavings;
+        }
+
+        // Extra lump sum needed for all temporary costs that extend past now
+        // (time-bounded Need/Want, Recurring, One-time items not yet reached)
+        let tempExtraNeeded = 0;
+        budget.forEach(b => {
+            const isNW = (b.kind === "Need" || (b.kind === "Want" && !S.cutWants)) && b.endAge != null;
+            const isRec = b.kind === "Recurring" && b.startAge != null && b.endAge != null;
+            if (isNW || isRec) {
+                const start = Math.max(currentAge, b.startAge || 0);
+                const end = b.endAge;
+                if (end <= currentAge) return;
+                for (let a = Math.ceil(start); a < end; a++) {
+                    const disc = b.isNominal ? 1 / Math.pow(1 + S.inflation, a - S.currentAge) : 1;
+                    tempExtraNeeded += (b.amount || 0) * 12 * disc;
+                }
+            }
+            if (b.kind === "One-time" && b.atAge != null && b.atAge >= currentAge) {
+                const disc = b.isNominal ? 1 / Math.pow(1 + S.inflation, b.atAge - S.currentAge) : 1;
+                tempExtraNeeded += (b.amount || 0) * disc;
+            }
+        });
+
+        for (let m = 0; m < 12; m++) {
+            bT = bT * (1 + rT) + allocRes.mTaxable;
+            bD = bD * (1 + rD) + (monthlyPreTaxTotal + allocRes.mMatch);
+            bR = bR * (1 + rR) + allocRes.mRoth;
+
+            // FI check: permanent target + lump sum for remaining temporary costs
+            const spendable = bT + bR + bD * (1 - S.retireTaxRateDeferred);
+            if (spendable >= target + tempExtraNeeded) {
+                return {
+                    yearsToFI: y + (m + 1) / 12,
+                    monthlySavings: lastMonthlySavings,
+                    allocResult: lastAllocResult,
+                    monthlyPreTax: lastMonthlyPreTax
+                };
+            }
+        }
+
+    }
+    return { yearsToFI: undefined };
+}
+
+
+function solveFI({
+  currentAge, budget, retireSpendBaseToday, medicareAge, preMedicareMonthly, postMedicareMonthly,
+  S_override = null
+}){
+  const activeS = S_override || S;
+  const retireEv = retireMonthly(budget);
+
+  let spendTarget = retireSpendBaseToday + (retireEv * 12);
+  let result = yearsToFI_detailed({
+    S: activeS,
+    retireSpendBaseToday: spendTarget,
+    budgetOverride: budget
+  });
+
+  if (result.yearsToFI == null) {
+      return {
+          yearsToFI: undefined,
+          monthlySavings: 0,
+          retirementSpendTodayEffective: spendTarget,
+          retirementBaseSpend: retireSpendBaseToday,
+          allocResult: {},
+          monthlyPreTax: 0
+      };
+  }
+
+  for (let i = 0; i < 5; i++) {
+      const retireAge = currentAge + result.yearsToFI;
+      const healthCost = retireAge < medicareAge ? preMedicareMonthly : postMedicareMonthly;
+      const nextSpendTarget = retireSpendBaseToday + (retireEv + healthCost) * 12;
+      if (Math.abs(nextSpendTarget - spendTarget) < 0.01) break;
+      spendTarget = nextSpendTarget;
+      result = yearsToFI_detailed({
+          S: activeS,
+          retireSpendBaseToday: spendTarget,
+          budgetOverride: budget
+      });
+      if (result.yearsToFI == null) {
+          return {
+              yearsToFI: undefined,
+              monthlySavings: 0,
+              retirementSpendTodayEffective: spendTarget,
+              retirementBaseSpend: retireSpendBaseToday,
+              allocResult: {},
+              monthlyPreTax: 0
+          };
+      }
+  }
+
+  return {
+      yearsToFI: result.yearsToFI,
+      monthlySavings: result.monthlySavings,
+      retirementSpendTodayEffective: spendTarget,
+      retirementBaseSpend: retireSpendBaseToday,
+      allocResult: result.allocResult,
+      monthlyPreTax: result.monthlyPreTax
+  };
+}
+
+/* ===== Monte Carlo ===== */
+function zn(){ let u=0,v=0; while(!u)u=Math.random(); while(!v)v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function mcPaths({start,save,cashFlowSchedule,years,mean,vol,infl,stress}){
+  const months=Math.max(1,Math.round(years*12));
+  const realMean=((1+mean)/(1+infl))-1;
+  const mu=Math.log(1+realMean)/12, sig=vol/Math.sqrt(12);
+  const runs=400, ends=[], bands=[], paths=[];
+  for(let r=0;r<runs;r++){
+    let bal=start; const p=[]; const shocks=stress? new Set([0,12]): new Set();
+    for(let m=0;m<months;m++){
+      const yearlyCashFlow = cashFlowSchedule && cashFlowSchedule.length
+        ? (cashFlowSchedule[Math.min(cashFlowSchedule.length - 1, Math.floor(m / 12))] || 0)
+        : ((save || 0) * 12);
+      const monthlyCashFlow = yearlyCashFlow / 12;
+      if(shocks.has(m)) bal *= (m===0? 0.7: 0.85);
+      const g=Math.exp((mu-0.5*sig*sig)+sig*zn());
+      bal = bal*g + monthlyCashFlow;
+      p.push(bal);
+    }
+    ends.push(p[p.length-1]); paths.push(p);
+  }
+  // Year 0 = starting balance (identical across all runs)
+  bands.push({year:0, p10:start, p50:start, p90:start});
+  // Sample bands at yearly intervals (every 12th month) for cleaner charts
+  for(let m=11;m<months;m+=12){
+    const vs=paths.map(p=>p[m]).sort((a,b)=>a-b);
+    const q=p=>vs[Math.min(vs.length-1, Math.floor((vs.length-1)*p))];
+    bands.push({year:Math.round((m+1)/12), p10:q(0.1), p50:q(0.5), p90:q(0.9)});
+  }
+  ends.sort((a,b)=>a-b);
+  const prc=p=>ends[Math.floor((runs-1)*p)];
+  return { p10:prc(0.1), p50:prc(0.5), p90:prc(0.9), bands };
+}
+
+/* ===== Full Projection to Age 120 (all values in today's dollars) ===== */
+function runFullProjection(S, fiResult) {
+    const projection = [];
+    let bT = S.startTaxable, bD = S.startDeferred, bR = S.startRoth;
+    let prevAssets = bT + bD + bR;
+    const retireAge = (fiResult.yearsToFI != null) ? S.currentAge + fiResult.yearsToFI : Infinity;
+
+    // Real (inflation-adjusted) annual returns — consistent with FI solver
+    const realRetT = ((1 + (S.retTaxable - (S.estInvestmentYield || 0) - S.taxDragTaxable)) / (1 + S.inflation)) - 1;
+    const realRetD = (1 + S.retDeferred) / (1 + S.inflation) - 1;
+    const realRetR = (1 + S.retRoth) / (1 + S.inflation) - 1;
+
+    for (let age = S.currentAge; age <= 120; age++) {
+        let investmentIncome = 0;
+        let annualExpenditure = 0;
+        let annualSavings = 0;
+        let yearGrossA = 0, yearGrossB = 0;
+        // Nominal items shrink in real terms over time
+        const nominalDiscount = 1 / Math.pow(1 + S.inflation, age - S.currentAge);
+
+        if (age < retireAge) { // Accumulation phase
+            const growthT = bT * realRetT;
+            const growthD = bD * realRetD;
+            const growthR = bR * realRetR;
+            investmentIncome = growthT + growthD + growthR;
+
+            const income = resolveIncome(S, age);
+            yearGrossA = income.grossA;
+            yearGrossB = income.grossB;
+            const yearsOut = age - S.currentAge;
+
+            const taxesForYear = householdTaxes(S, yearGrossA, yearGrossB, bT, yearsOut);
+
+            // Base expenses: filter by age range, non-nominal stay flat (real), nominal shrink
+            const monthlyBase = S.budget
+                .filter(b => S.cutWants ? b.kind === "Need" : (b.kind === "Need" || b.kind === "Want"))
+                .reduce((s, r) => {
+                    if (r.startAge != null && age < r.startAge) return s;
+                    if (r.endAge != null && age >= r.endAge) return s;
+                    return s + (r.amount || 0) * (r.isNominal ? nominalDiscount : 1);
+                }, 0);
+
+            // Events: non-nominal stay flat (real), nominal shrink
+            const monthlyEvents = S.budget.reduce((total, ev) => {
+                let cost = 0;
+                if (ev.kind === "Recurring" && age >= (ev.startAge || 0) && age < (ev.endAge || Infinity)) {
+                    cost = ev.amount || 0;
+                } else if (ev.kind === "One-time" && age === ev.atAge) {
+                    cost = (ev.amount || 0) / 12;
+                }
+                const realFactor = ev.isNominal ? nominalDiscount : 1;
+                return total + (cost * realFactor);
+            }, 0);
+
+            const mhTaxForYear = computeCAMentalHealth(S, taxesForYear.taxableIncomeCA, yearsOut);
+            const allocForYear = allocateWithCaps(S, taxesForYear.netIncome - mhTaxForYear, taxesForYear.wagesA, taxesForYear.wagesB, monthlyBase + monthlyEvents, yearGrossA, yearGrossB);
+            const preTaxForYear = (taxesForYear.preTaxTotal || 0) / 12;
+
+            bT += growthT + (allocForYear.mTaxable * 12);
+            bD += growthD + ((preTaxForYear + allocForYear.mMatch) * 12);
+            bR += growthR + (allocForYear.mRoth * 12);
+
+            annualExpenditure = (monthlyBase + monthlyEvents) * 12;
+            annualSavings = (preTaxForYear + allocForYear.mMatch + allocForYear.mRoth + allocForYear.mTaxable) * 12;
+
+        } else { // Decumulation phase — all in today's dollars
+            yearGrossA = 0;
+            yearGrossB = 0;
+
+            // Base retirement spending — filter by age range, nominal discount
+            const retireBaseMonthly = S.budget
+                .filter(b => S.cutWants ? b.kind === "Need" : (b.kind === "Need" || b.kind === "Want"))
+                .reduce((s, r) => {
+                    if (r.startAge != null && age < r.startAge) return s;
+                    if (r.endAge != null && age >= r.endAge) return s;
+                    return s + (r.amount || 0) * (r.isNominal ? nominalDiscount : 1);
+                }, 0);
+            let baseSpend = S.retirementAnnualSpend ?? (retireBaseMonthly * 12);
+
+            let recurringSpend = S.budget.reduce((total, ev) => {
+                let cost = 0;
+                // RetirementRecurring: always active in retirement (within age bounds)
+                if (ev.kind === "RetirementRecurring" && age >= (ev.startAge || 0) && age < (ev.endAge || Infinity)) {
+                     cost = (ev.amount || 0) * 12;
+                }
+                // Recurring: also active in retirement if age range overlaps
+                if (ev.kind === "Recurring" && ev.startAge != null && ev.endAge != null
+                    && age >= ev.startAge && age < ev.endAge) {
+                     cost = (ev.amount || 0) * 12;
+                }
+                const realFactor = ev.isNominal ? nominalDiscount : 1;
+                return total + (cost * realFactor);
+            }, 0);
+
+            let oneTimeSpend = S.budget.reduce((total, ev) => {
+                 if (ev.kind === "One-time" && age === ev.atAge) {
+                    const realFactor = ev.isNominal ? nominalDiscount : 1;
+                    return total + ((ev.amount || 0) * realFactor);
+                 }
+                 return total;
+            }, 0);
+
+            const yearsOut = age - S.currentAge;
+            const retirementTaxes = householdTaxes(S, 0, 0, bT, yearsOut);
+            const retirementMhTax = computeCAMentalHealth(S, retirementTaxes.taxableIncomeCA, yearsOut);
+            const netBrokerageIncome = retirementTaxes.netIncome - retirementMhTax;
+
+            // Healthcare: in today's dollars (real)
+            const healthcare = (age < S.medicareAge ? S.preMedicareMonthly : S.postMedicareMonthly) * 12;
+
+            annualExpenditure = baseSpend + recurringSpend + oneTimeSpend + healthcare;
+
+            let needed = Math.max(0, annualExpenditure - netBrokerageIncome);
+            const withdrawT = Math.min(bT, needed);
+            bT -= withdrawT;
+            needed -= withdrawT;
+
+            const withdrawR = Math.min(bR, needed);
+            bR -= withdrawR;
+            needed -= withdrawR;
+
+            const preTaxNeeded = needed / (1 - S.retireTaxRateDeferred);
+            const withdrawD = Math.min(bD, preTaxNeeded);
+            bD -= withdrawD;
+
+            const growthT = bT * realRetT;
+            const growthD = bD * realRetD;
+            const growthR = bR * realRetR;
+            investmentIncome = growthT + growthD + growthR;
+
+            bT += growthT;
+            bD += growthD;
+            bR += growthR;
+        }
+
+        const currentAssets = bT + bD + bR;
+        const portfolioCashFlow = currentAssets - prevAssets - investmentIncome;
+        projection.push({
+            age,
+            assets: currentAssets,
+            netChange: currentAssets - prevAssets,
+            investmentIncome: investmentIncome,
+            earnedIncomeA: yearGrossA,
+            earnedIncomeB: yearGrossB,
+            expenditure: annualExpenditure,
+            savings: annualSavings,
+            portfolioCashFlow,
+        });
+        prevAssets = currentAssets;
+    }
+    return projection;
+}
+
+
+/* ===== Render ===== */
+function render(){
+  // budget totals
+  // All needs/wants (for current-year display)
+  const monthlyNeeds = S.budget.filter(b=>b.kind==="Need").reduce((s,r)=>s+(r.amount||0),0);
+  const monthlyWants = S.budget.filter(b=>b.kind==="Want").reduce((s,r)=>s+(r.amount||0),0);
+  const monthlyBase = S.cutWants ? monthlyNeeds : (monthlyNeeds+monthlyWants);
+  // Permanent needs/wants only (no end date) — used for retirement target
+  const monthlyNeedsPerm = S.budget.filter(b=>b.kind==="Need"&&b.endAge==null).reduce((s,r)=>s+(r.amount||0),0);
+  const monthlyWantsPerm = S.budget.filter(b=>b.kind==="Want"&&b.endAge==null).reduce((s,r)=>s+(r.amount||0),0);
+  const monthlyBasePerm = S.cutWants ? monthlyNeedsPerm : (monthlyNeedsPerm+monthlyWantsPerm);
+  const defaultAnnualSpend = monthlyBasePerm*12;
+
+  // taxes (federal + CA) - Initial calculation for display
+  const displayGrossA = (S.filingMode === 'Single' || S.filingMode === 'Head of Household') ? S.grossIncome : S.grossIncomeA;
+  const displayGrossB = (S.filingMode === 'Single' || S.filingMode === 'Head of Household') ? 0 : S.grossIncomeB;
+  const taxes = householdTaxes(S, displayGrossA, displayGrossB, S.startTaxable, 0);
+  const niitAmount = taxes.niitTax || 0;
+  // CA Mental Health Tax (already in brackets, computed here for display)
+  // Year 0 = current year, no real-dollar discount
+  const caMHAmount = computeCAMentalHealth(S, taxes.taxableIncomeCA, 0);
+
+  // --- Main FI Solve ---
+  const solve = solveFI({
+    currentAge:S.currentAge, budget:S.budget,
+    retireSpendBaseToday: S.retirementAnnualSpend ?? defaultAnnualSpend,
+    medicareAge:S.medicareAge, preMedicareMonthly:S.preMedicareMonthly, postMedicareMonthly:S.postMedicareMonthly,
+  });
+  const yearsToFI = solve.yearsToFI, retireAge = yearsToFI!=null ? S.currentAge+yearsToFI : undefined;
+  const monthlySavings = solve.monthlySavings, spendTodayEff = solve.retirementSpendTodayEffective;
+  const allocResult = solve.allocResult || {};
+  const monthlyPreTax = solve.monthlyPreTax || 0;
+  const combinedGrossIncome = (S.grossIncomeA || 0) + (S.grossIncomeB || 0);
+  const netAfterAllTaxes = taxes.netIncome - caMHAmount;
+  const isOneEarner = S.filingMode === 'Single' || S.filingMode === 'Head of Household';
+  
+  // --- Early Retirement Impact Calculation ---
+  let earlyRetireImpact = { originalYears: null, newYears: null, difference: null };
+  if (S.earlyRetirement.enabled && (S.filingMode === 'Married Filing Jointly' || S.filingMode === 'Two Singles (Domestic Partners)')) {
+      // 1. Calculate without early retirement using a deep clone
+      const S_baseline = structuredClone(S);
+      S_baseline.earlyRetirement.enabled = false;
+
+      const solve_baseline = solveFI({
+          currentAge:S.currentAge, budget:S.budget,
+          retireSpendBaseToday: S.retirementAnnualSpend ?? defaultAnnualSpend,
+          medicareAge:S.medicareAge, preMedicareMonthly:S.preMedicareMonthly, postMedicareMonthly:S.postMedicareMonthly,
+          S_override: S_baseline
+      });
+      earlyRetireImpact.originalYears = solve_baseline.yearsToFI;
+      
+      // 2. The main 'solve' already calculated with early retirement enabled
+      earlyRetireImpact.newYears = yearsToFI;
+
+      // 3. Calculate difference
+      if (earlyRetireImpact.originalYears != null && earlyRetireImpact.newYears != null) {
+          earlyRetireImpact.difference = earlyRetireImpact.newYears - earlyRetireImpact.originalYears;
+      }
+  }
+
+  let workBreakImpact = { originalYears: null, newYears: null, difference: null };
+  if (S.workBreak.enabled) {
+      const S_baseline = structuredClone(S);
+      S_baseline.workBreak.enabled = false;
+
+      const solve_baseline = solveFI({
+          currentAge:S.currentAge, budget:S.budget,
+          retireSpendBaseToday: S.retirementAnnualSpend ?? defaultAnnualSpend,
+          medicareAge:S.medicareAge, preMedicareMonthly:S.preMedicareMonthly, postMedicareMonthly:S.postMedicareMonthly,
+          S_override: S_baseline
+      });
+      workBreakImpact.originalYears = solve_baseline.yearsToFI;
+      workBreakImpact.newYears = yearsToFI;
+
+      if (workBreakImpact.originalYears != null && workBreakImpact.newYears != null) {
+          workBreakImpact.difference = workBreakImpact.newYears - workBreakImpact.originalYears;
+      }
+  }
+
+
+  const monthlyEventCosts = preFiMonthly(S.budget, S.currentAge, (yearsToFI||60)*12);
+  const currentMonthlyEventCosts = S.budget.reduce((total, ev) => {
+    let cost = 0;
+    if (ev.kind === "Recurring" && ev.startAge != null && ev.endAge != null
+        && S.currentAge >= ev.startAge && S.currentAge < ev.endAge) {
+      cost = ev.amount || 0;
+    } else if (ev.kind === "One-time" && ev.atAge != null
+        && S.currentAge <= ev.atAge && ev.atAge < S.currentAge + 1) {
+      cost = (ev.amount || 0) / 12;
+    }
+    return total + cost;
+  }, 0);
+
+  // blended return rate for MC sim — account for tax drag on taxable portion
+  const totalInvested = S.startTaxable + S.startDeferred + S.startRoth;
+  const alloc = {
+      taxable: totalInvested > 0 ? S.startTaxable / totalInvested : 1/3,
+      deferred: totalInvested > 0 ? S.startDeferred / totalInvested : 1/3,
+      roth: totalInvested > 0 ? S.startRoth / totalInvested : 1/3,
+  };
+  const blendNominal = (S.retTaxable - (S.estInvestmentYield || 0) - S.taxDragTaxable)*alloc.taxable + S.retDeferred*alloc.deferred + S.retRoth*alloc.roth;
+  // Total monthly contributions (pre-tax + match + roth + taxable), not just post-tax savings
+  const totalMonthlySave = monthlyPreTax + (allocResult.mMatch||0) + (allocResult.mRoth||0) + (allocResult.mTaxable||0);
+  const fullProjection = runFullProjection(S, solve);
+  const mcCashFlowSchedule = fullProjection.filter(p => p.age < S.projectionCutoffAge).map(p => p.portfolioCashFlow);
+
+  // targets & MC
+  const targetNestEggReal = spendTodayEff / Math.max(0.0001,S.withdrawalRate);
+  const projectedRealSpend = spendTodayEff; // already in today's dollars
+  const yearsToProject = Math.max(1, S.projectionCutoffAge - S.currentAge);
+  const mc = mcPaths({ start:S.startTaxable+S.startDeferred+S.startRoth, save:totalMonthlySave, cashFlowSchedule:mcCashFlowSchedule, years:yearsToProject, mean:blendNominal, vol:S.volatility, infl:S.inflation, stress:S.stressTest });
+  const chartProjectionData = fullProjection.filter(p => p.age <= S.projectionCutoffAge);
+  const deterministicBaseline = [
+    { year: 0, assets: S.startTaxable + S.startDeferred + S.startRoth },
+    ...chartProjectionData.slice(0, yearsToProject).map((p, i) => ({ year: i + 1, assets: p.assets }))
+  ];
+
+
+  // per-item impact (2 decimals)
+  const perImpact = {};
+  for(const row of S.budget){
+    const b2=S.budget.filter(r=>r.id!==row.id);
+    // Permanent-only (no endAge) for retirement target
+    const needs2perm=b2.filter(b=>b.kind==="Need"&&b.endAge==null).reduce((s,r)=>s+(r.amount||0),0);
+    const wants2perm=b2.filter(b=>b.kind==="Want"&&b.endAge==null).reduce((s,r)=>s+(r.amount||0),0);
+    const base2perm= S.cutWants ? needs2perm : (needs2perm+wants2perm);
+    const s2 = solveFI({
+      currentAge:S.currentAge, budget:b2,
+      retireSpendBaseToday: S.retirementAnnualSpend ?? base2perm*12,
+      medicareAge:S.medicareAge, preMedicareMonthly:S.preMedicareMonthly, postMedicareMonthly:S.postMedicareMonthly,
+    });
+    perImpact[row.id] = (yearsToFI!=null && s2.yearsToFI!=null) ? Math.max(0, Math.round((yearsToFI - s2.yearsToFI)*1000)/1000) : undefined;
+  }
+
+  // cut-wants improvement
+  const needsPerm=S.budget.filter(b=>b.kind==="Need"&&b.endAge==null).reduce((s,r)=>s+(r.amount||0),0);
+  const sCut = solveFI({
+    currentAge:S.currentAge, budget:S.budget.filter(b=>b.kind!=="Want"),
+    retireSpendBaseToday: S.retirementAnnualSpend ?? needsPerm*12,
+    medicareAge:S.medicareAge, preMedicareMonthly:S.preMedicareMonthly, postMedicareMonthly:S.postMedicareMonthly,
+  });
+  const cutWantsImpact = (yearsToFI!=null && sCut.yearsToFI!=null) ? Math.max(0, Math.round((yearsToFI - sCut.yearsToFI)*1000)/1000) : undefined;
+
+  /* ===== TAB BAR ===== */
+  const tabsEl = document.getElementById("mainTabs");
+  setHTML(tabsEl, `
+    <button class="tab-btn ${S.tab==='income'?'active':''}" id="tab-income">Income & Taxes</button>
+    <button class="tab-btn ${S.tab==='budget'?'active':''}" id="tab-budget">Budget</button>
+    <button class="tab-btn ${S.tab==='projections'?'active':''}" id="tab-projections">Projections</button>
+  `);
+
+  /* ===== TAB CONTENT ===== */
+  const C = document.getElementById("content");
+  let tabHTML = '';
+
+  if (S.tab === 'income') {
+  tabHTML = `
+    <div class="card">
+      <div class="hd">Core</div>
+      <div class="bd">
+        <div class="row r2">
+          <div><label class="l">Current age</label><input class="t" id="currentAge" type="text" inputmode="decimal" value="${S.currentAge}"></div>
+          <div><label class="l">Inflation</label><div class="between"><input class="t" id="inflation" type="text" inputmode="decimal" value="${(S.inflation*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          <div><label class="l">Withdrawal rate (real)</label><div class="between"><input class="t" id="withdrawalRate" type="text" inputmode="decimal" value="${(S.withdrawalRate*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          <div><label class="l">Volatility (MC)</label><div class="between"><input class="t" id="volatility" type="text" inputmode="decimal" value="${(S.volatility*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          <div><label class="l">Stress test</label><label class="mut" style="font-size:12px"><input type="checkbox" id="stressTest" ${S.stressTest?"checked":""}> Front-load bear years</label></div>
+        </div>
+        <div style="margin-top:12px" class="flex">
+            <button class="btn solid" id="resetBtn">Reset</button>
+            <button class="btn" id="saveBtn">Save as File</button>
+            <label for="loadFile" class="btn">Load from File</label>
+            <input type="file" id="loadFile" style="display:none;" accept=".json,text/plain">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="hd">Household & Taxes (Federal + CA)</div>
+      <div class="bd">
+        <div>
+          <label class="l">Filing mode</label>
+          <select class="s" id="filingMode">
+            <option ${S.filingMode==="Single"?"selected":""}>Single</option>
+            <option ${S.filingMode==="Head of Household"?"selected":""}>Head of Household</option>
+            <option ${S.filingMode==="Married Filing Jointly"?"selected":""}>Married Filing Jointly</option>
+            <option ${S.filingMode==="Two Singles (Domestic Partners)"?"selected":""}>Two Singles (Domestic Partners)</option>
+          </select>
+        </div>
+
+        ${S.filingMode==="Two Singles (Domestic Partners)" ? `
+          <div style="font-weight:700;margin-top:8px">Partner A</div>
+          <div class="row r2">
+            <div><label class="l">Federal filing status</label>
+              <select class="s" id="federalFilingA">
+                <option ${S.federalFilingA==="Single"?"selected":""}>Single</option>
+                <option ${S.federalFilingA==="Head of Household"?"selected":""}>Head of Household</option>
+              </select></div>
+            <div><label class="l">Gross income ($/yr)</label><input class="t" id="grossIncomeA" type="text" inputmode="decimal" value="${S.grossIncomeA}"></div>
+            <div><label class="l">Pre-tax contrib ($/yr)</label><input class="t" id="preTaxContribA" type="text" inputmode="decimal" value="${S.preTaxContribA}"></div>
+            <div><label class="l">Fed deduction (A)</label>
+              <div class="flex" style="gap:4px"><select class="s" id="fedDeductionTypeA" style="width:110px;flex-shrink:0">
+                <option value="standard" ${S.fedDeductionTypeA==="standard"?"selected":""}>Standard</option>
+                <option value="itemized" ${S.fedDeductionTypeA==="itemized"?"selected":""}>Itemized</option>
+              </select><input class="t" id="fedDedAmountA" type="text" inputmode="decimal" value="${S.fedDeductionTypeA==='itemized' ? S.fedItemizedAmountA : (S.federalFilingA==='Head of Household' ? S.stdDedHoH : S.stdDedSingle)}"></div>
+            </div>
+          </div>
+          <div style="font-weight:700;margin-top:8px">Partner B</div>
+          <div class="row r2">
+            <div><label class="l">Federal filing status</label>
+              <select class="s" id="federalFilingB">
+                <option ${S.federalFilingB==="Single"?"selected":""}>Single</option>
+                <option ${S.federalFilingB==="Head of Household"?"selected":""}>Head of Household</option>
+              </select></div>
+            <div><label class="l">Gross income ($/yr)</label><input class="t" id="grossIncomeB" type="text" inputmode="decimal" value="${S.grossIncomeB}"></div>
+            <div><label class="l">Pre-tax contrib ($/yr)</label><input class="t" id="preTaxContribB" type="text" inputmode="decimal" value="${S.preTaxContribB}"></div>
+            <div><label class="l">Fed deduction (B)</label>
+              <div class="flex" style="gap:4px"><select class="s" id="fedDeductionTypeB" style="width:110px;flex-shrink:0">
+                <option value="standard" ${S.fedDeductionTypeB==="standard"?"selected":""}>Standard</option>
+                <option value="itemized" ${S.fedDeductionTypeB==="itemized"?"selected":""}>Itemized</option>
+              </select><input class="t" id="fedDedAmountB" type="text" inputmode="decimal" value="${S.fedDeductionTypeB==='itemized' ? S.fedItemizedAmountB : (S.federalFilingB==='Head of Household' ? S.stdDedHoH : S.stdDedSingle)}"></div>
+            </div>
+          </div>
+          <div class="row r2" style="margin-top:8px">
+            <div><label class="l">CA deduction (joint)</label>
+              <div class="flex" style="gap:4px"><select class="s" id="caDeductionType" style="width:110px;flex-shrink:0">
+                <option value="standard" ${S.caDeductionType==="standard"?"selected":""}>Standard</option>
+                <option value="itemized" ${S.caDeductionType==="itemized"?"selected":""}>Itemized</option>
+              </select><input class="t" id="caDedAmountDP" type="text" inputmode="decimal" value="${S.caDeductionType==='itemized' ? S.caItemizedAmount : S.stdDedCA_MFJ}"></div>
+            </div>
+          </div>
+          ${S.fedDeductionTypeA==='itemized' ? `<div class="note" style="margin-top:4px">Partner A fed itemized: 2025 SALT cap is <b>${cur(effectiveSaltCap(S, S.grossIncomeA - cappedEmployeeDeferralAnnual(S.preTaxContribA, S.grossIncomeA, S.limitEmployeeDeferral)))}</b> at A's AGI (base $40k, phases out above $500k at 30%, floor $10k).</div>` : ''}
+          ${S.fedDeductionTypeB==='itemized' ? `<div class="note" style="margin-top:4px">Partner B fed itemized: 2025 SALT cap is <b>${cur(effectiveSaltCap(S, S.grossIncomeB - cappedEmployeeDeferralAnnual(S.preTaxContribB, S.grossIncomeB, S.limitEmployeeDeferral)))}</b> at B's AGI.</div>` : ''}
+          ${S.caDeductionType==='itemized' ? `<div class="note" style="margin-top:4px">CA itemized (joint): no SALT cap. Include mortgage interest, property tax, charitable, medical. State income tax is <b>not</b> deductible on CA returns.</div>` : ''}
+        ` : `
+          <div class="row r2" style="margin-top:8px">
+            <div><label class="l">${S.filingMode === 'Married Filing Jointly' ? 'Combined Gross' : 'Gross'} income ($/yr)</label><input class="t" id="grossIncome" type="text" inputmode="decimal" value="${S.filingMode === 'Married Filing Jointly' ? combinedGrossIncome : S.grossIncome}" ${S.filingMode === 'Married Filing Jointly' ? 'readonly title="Derived from Partner A + Partner B" style="background:var(--bg2);color:var(--mut);cursor:not-allowed"' : ''}></div>
+            ${S.filingMode !== 'Married Filing Jointly' ? `<div><label class="l">Pre-tax contrib ($/yr)</label><input class="t" id="preTaxContrib" type="text" inputmode="decimal" value="${S.preTaxContrib}"></div>` : ''}
+            <div><label class="l">Federal deduction</label>
+              <div class="flex" style="gap:4px"><select class="s" id="fedDeductionType" style="width:110px;flex-shrink:0">
+                <option value="standard" ${S.fedDeductionType==="standard"?"selected":""}>Standard</option>
+                <option value="itemized" ${S.fedDeductionType==="itemized"?"selected":""}>Itemized</option>
+              </select><input class="t" id="fedDedAmount" type="text" inputmode="decimal" value="${S.fedDeductionType==='itemized' ? S.fedItemizedAmount : (S.filingMode==='Single'? S.stdDedSingle : S.filingMode==='Head of Household' ? S.stdDedHoH : S.stdDedMFJ)}"></div>
+            </div>
+            <div><label class="l">CA deduction</label>
+              <div class="flex" style="gap:4px"><select class="s" id="caDeductionType" style="width:110px;flex-shrink:0">
+                <option value="standard" ${S.caDeductionType==="standard"?"selected":""}>Standard</option>
+                <option value="itemized" ${S.caDeductionType==="itemized"?"selected":""}>Itemized</option>
+              </select><input class="t" id="caDedAmount" type="text" inputmode="decimal" value="${S.caDeductionType==='itemized' ? S.caItemizedAmount : (S.filingMode==='Single'? S.stdDedCA_Single : S.filingMode==='Head of Household' ? S.stdDedCA_HoH : S.stdDedCA_MFJ)}"></div>
+            </div>
+          </div>
+          ${S.fedDeductionType==='itemized' ? `<div class="note" style="margin-top:4px">Federal itemized: 2025 SALT cap is <b>${cur(effectiveSaltCap(S, taxes.grossTotal - taxes.preTaxTotal))}</b> at your AGI (base $40k, phases out above $500k at 30%, floor $10k). Includes state/local income + property taxes. Add mortgage interest, charitable, medical (above 7.5% AGI), etc.</div>` : ''}
+          ${S.caDeductionType==='itemized' ? `<div class="note" style="margin-top:4px">CA itemized: no SALT cap. Include mortgage interest, property tax, charitable, medical expenses, etc. State income tax is <b>not</b> deductible on CA returns.</div>` : ''}
+            ${S.filingMode === 'Married Filing Jointly' ? `
+              <div class="note" style="margin-top:4px">Combined gross is derived from Partner A + Partner B.</div>
+              <div class="note" style="margin-top: 4px;">Per-person incomes & 401(k) contributions for allocation and early retirement modeling.</div>
+              <div class="row r2" style="margin-top:8px">
+                <div><label class="l">Partner A Gross Income ($/yr)</label><input class="t" id="grossIncomeA" type="text" inputmode="decimal" value="${S.grossIncomeA}"></div>
+                <div><label class="l">Partner A Pre-tax contrib ($/yr)</label><input class="t" id="preTaxContribA" type="text" inputmode="decimal" value="${S.preTaxContribA}"></div>
+                <div><label class="l">Partner B Gross Income ($/yr)</label><input class="t" id="grossIncomeB" type="text" inputmode="decimal" value="${S.grossIncomeB}"></div>
+                <div><label class="l">Partner B Pre-tax contrib ($/yr)</label><input class="t" id="preTaxContribB" type="text" inputmode="decimal" value="${S.preTaxContribB}"></div>
+              </div>
+            ` : ''}
+        `}
+
+        ${(S.filingMode === 'Married Filing Jointly' || S.filingMode === 'Two Singles (Domestic Partners)') ? `
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px">
+            <div class="between">
+                <div style="font-weight:700">Early Retirement Scenario</div>
+                <input type="checkbox" id="earlyRetirementEnabled" ${S.earlyRetirement.enabled ? 'checked' : ''}>
+            </div>
+            ${S.earlyRetirement.enabled ? `
+                <div class="row r2" style="margin-top:8px">
+                    <div>
+                        <label class="l">Who retires early?</label>
+                        <select class="s" id="earlyRetirementWho">
+                            <option value="A" ${S.earlyRetirement.who === 'A' ? 'selected' : ''}>Partner A</option>
+                            <option value="B" ${S.earlyRetirement.who === 'B' ? 'selected' : ''}>Partner B</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="l">At age</label>
+                        <input class="t" id="earlyRetirementAtAge" type="text" inputmode="decimal" value="${S.earlyRetirement.atAge}">
+                    </div>
+                </div>
+                <div class="note" style="margin-top: 8px;">Models one partner's income stopping at the specified age, recalculating the household's path to FI.</div>
+            ` : '<div class="note" style="margin-top: 4px;">Enable to model one partner retiring before the other.</div>'}
+        </div>
+        ` : ''}
+
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px">
+            <div class="between">
+                <div style="font-weight:700">Work Break / Sabbatical</div>
+                <input type="checkbox" id="workBreakEnabled" ${S.workBreak.enabled ? 'checked' : ''}>
+            </div>
+            ${S.workBreak.enabled ? `
+                <div class="row ${isOneEarner ? 'r2' : 'r3'}" style="margin-top:8px">
+                    ${isOneEarner ? '' : `
+                    <div>
+                        <label class="l">Who takes the break?</label>
+                        <select class="s" id="workBreakWho">
+                            <option value="A" ${S.workBreak.who === 'A' ? 'selected' : ''}>Partner A</option>
+                            <option value="B" ${S.workBreak.who === 'B' ? 'selected' : ''}>Partner B</option>
+                        </select>
+                    </div>`}
+                    <div>
+                        <label class="l">Break starts at age</label>
+                        <input class="t" id="workBreakAtAge" type="text" inputmode="decimal" value="${S.workBreak.atAge}">
+                    </div>
+                    <div>
+                        <label class="l">Duration (years)</label>
+                        <input class="t" id="workBreakDurationYears" type="text" inputmode="decimal" value="${S.workBreak.durationYears}">
+                    </div>
+                </div>
+                <div class="note" style="margin-top:8px">Models a temporary pause in earned income. Decimal durations are prorated across the affected year.</div>
+            ` : `<div class="note" style="margin-top:4px">Enable to model a temporary work break or sabbatical.</div>`}
+        </div>
+
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px">
+          <div class="between" style="margin-bottom:8px">
+            <div style="font-weight:700">Income Projections</div>
+            <select class="s" id="incomeMode" style="width:220px">
+              <option value="fixed" ${S.incomeMode==="fixed"?"selected":""}>Fixed (flat in today's $)</option>
+              <option value="nominal" ${S.incomeMode==="nominal"?"selected":""}>Nominal (no raises, loses to inflation)</option>
+              <option value="growth" ${S.incomeMode==="growth"?"selected":""}>Annual real growth rate</option>
+              <option value="manual" ${S.incomeMode==="manual"?"selected":""}>Manual schedule</option>
+            </select>
+          </div>
+          ${S.incomeMode === "fixed" ? `
+            <div class="note">Income stays constant in today's dollars (i.e., keeps up with inflation).</div>
+          ` : ''}
+          ${S.incomeMode === "nominal" ? `
+            <div class="note">Salary stays at the same nominal dollar amount — no raises. Purchasing power declines by ${pct(S.inflation)}/yr inflation. At ${pct(S.inflation)} over 20 years, real income drops to ${pct(1/Math.pow(1+S.inflation,20))} of today's value.</div>
+          ` : ''}
+          ${S.incomeMode === "growth" ? `
+            <div class="row r2">
+              <div><label class="l">${S.filingMode==='Single'||S.filingMode==='Head of Household'?'Real growth rate':'Partner A real growth'}</label><div class="between"><input class="t" id="incomeRealGrowthA" type="text" inputmode="decimal" value="${(S.incomeRealGrowthA*100).toFixed(2)}"><span class="mut">%</span></div></div>
+              ${S.filingMode!=='Single'&&S.filingMode!=='Head of Household'? `<div><label class="l">Partner B real growth</label><div class="between"><input class="t" id="incomeRealGrowthB" type="text" inputmode="decimal" value="${(S.incomeRealGrowthB*100).toFixed(2)}"><span class="mut">%</span></div></div>` : ''}
+            </div>
+            <div class="note" style="margin-top:4px">0% = salary keeps up with inflation. 2% = 2% real raises above CPI each year.</div>
+          ` : ''}
+          ${S.incomeMode === "manual" ? `
+            <div class="note" style="margin-bottom:8px">All amounts in today's dollars. Edit income at each age, or add/remove rows.</div>
+            <div style="font-weight:700;margin-bottom:4px">${S.filingMode==='Single'||S.filingMode==='Head of Household'?'Income Schedule':'Partner A Income Schedule'}</div>
+            <div class="data-table-wrap" style="max-height:300px">
+            <table><thead><tr><th style="width:80px">Age</th><th style="text-align:right">Income (today's $)</th><th style="width:60px"></th></tr></thead>
+            <tbody>${(S.incomeScheduleA||[]).map((r,i)=>`<tr>
+              <td><input class="t sched-age-a" data-i="${i}" name="sched-age-a-${i}" type="text" inputmode="decimal" value="${r.age}"></td>
+              <td style="text-align:right"><input class="t sched-inc-a" data-i="${i}" name="sched-inc-a-${i}" type="text" inputmode="decimal" value="${r.income}"></td>
+              <td><button class="btn sm sched-del-a" data-i="${i}">Del</button></td>
+            </tr>`).join('')}</tbody></table>
+            </div>
+            <button class="btn sm" id="addSchedA" style="margin-top:6px">+ Add row</button>
+
+            ${S.filingMode!=='Single'&&S.filingMode!=='Head of Household'? `
+              <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Partner B Income Schedule</div>
+              <div class="data-table-wrap" style="max-height:300px">
+              <table><thead><tr><th style="width:80px">Age</th><th style="text-align:right">Income (today's $)</th><th style="width:60px"></th></tr></thead>
+              <tbody>${(S.incomeScheduleB||[]).map((r,i)=>`<tr>
+                <td><input class="t sched-age-b" data-i="${i}" name="sched-age-b-${i}" type="text" inputmode="decimal" value="${r.age}"></td>
+                <td style="text-align:right"><input class="t sched-inc-b" data-i="${i}" name="sched-inc-b-${i}" type="text" inputmode="decimal" value="${r.income}"></td>
+                <td><button class="btn sm sched-del-b" data-i="${i}">Del</button></td>
+              </tr>`).join('')}</tbody></table>
+              </div>
+              <button class="btn sm" id="addSchedB" style="margin-top:6px">+ Add row</button>
+            ` : ''}
+          ` : ''}
+        </div>
+
+        <div class="row r3" style="margin-top:8px">
+          <div><label class="l">SS rate</label><div class="between"><input class="t" id="ssRate" type="text" inputmode="decimal" value="${(S.ssRate*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          <div><label class="l">SS wage cap ($)</label><input class="t" id="ssCap" type="text" inputmode="decimal" value="${S.ssCap}"></div>
+          <div><label class="l">Medicare rate</label><div class="between"><input class="t" id="medicareRate" type="text" inputmode="decimal" value="${(S.medicareRate*100).toFixed(3)}"><span class="mut">%</span></div></div>
+        </div>
+        <div class="row r3" style="margin-top:8px">
+          <div><label class="l">Addl Medicare rate</label><div class="between"><input class="t" id="addlMedicareRate" type="text" inputmode="decimal" value="${(S.addlMedicareRate*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          <div><label class="l">Addl Medicare threshold (Single/HoH)</label><input class="t" id="addlMedicareThresholdSingle" type="text" inputmode="decimal" value="${S.addlMedicareThresholdSingle}"></div>
+          <div><label class="l">Addl Medicare threshold (MFJ)</label><input class="t" id="addlMedicareThresholdMFJ" type="text" inputmode="decimal" value="${S.addlMedicareThresholdMFJ}"></div>
+        </div>
+
+        <div class="row r2" style="margin-top:8px">
+          <div><label class="l">Employee deferral limit ($/yr)</label><input class="t" id="limitEmployeeDeferral" type="text" inputmode="decimal" value="${S.limitEmployeeDeferral}"></div>
+          <div><label class="l">Overall 401(k) limit ($/yr)</label><input class="t" id="limitOverall401k" type="text" inputmode="decimal" value="${S.limitOverall401k}"></div>
+        </div>
+
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px">
+          <div class="between" style="margin-bottom:8px">
+            <div style="font-weight:700">Federal brackets</div>
+            <select class="s" id="fedView" style="width:220px">
+              <option ${S.fedView==="Single"?"selected":""}>Single</option>
+              <option ${S.fedView==="Head of Household"?"selected":""}>Head of Household</option>
+              <option ${S.fedView==="Married Filing Jointly"?"selected":""}>Married Filing Jointly</option>
+            </select>
+          </div>
+          ${(S.fedBrackets[S.fedView]||DEFAULT_FED[S.fedView]||[]).map((t,i)=>`
+            <div class="row r3" style="align-items:end;margin-bottom:6px">
+              <div><label class="l">Rate #${i+1}</label><div class="between"><input class="t fed-rate" data-i="${i}" type="text" inputmode="decimal" value="${(t.rate*100).toFixed(2)}"><span class="mut">%</span></div></div>
+              <div><label class="l">Up to ($)</label><input class="t fed-up" data-i="${i}" type="text" inputmode="decimal" value="${isFinite(t.upTo)? t.upTo : 999999999}"></div>
+              <div><button class="btn sm fed-del" data-i="${i}">Delete</button></div>
+            </div>
+          `).join("")}
+          <button class="btn sm" id="addFedBracket">Add tier</button>
+        </div>
+
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px">
+          <div class="between" style="margin-bottom:8px">
+            <div style="font-weight:700">Federal LTCG brackets</div>
+            <select class="s" id="fedCapitalGainsView" style="width:220px">
+              <option ${S.fedCapitalGainsView==="Single"?"selected":""}>Single</option>
+              <option ${S.fedCapitalGainsView==="Head of Household"?"selected":""}>Head of Household</option>
+              <option ${S.fedCapitalGainsView==="Married Filing Jointly"?"selected":""}>Married Filing Jointly</option>
+            </select>
+          </div>
+          ${(S.fedCapitalGainsBrackets[S.fedCapitalGainsView]||DEFAULT_FED_LTCG[S.fedCapitalGainsView]||[]).map((t,i)=>`
+            <div class="row r3" style="align-items:end;margin-bottom:6px">
+              <div><label class="l">Rate #${i+1}</label><div class="between"><input class="t fed-cg-rate" data-i="${i}" type="text" inputmode="decimal" value="${(t.rate*100).toFixed(2)}"><span class="mut">%</span></div></div>
+              <div><label class="l">Up to ($)</label><input class="t fed-cg-up" data-i="${i}" type="text" inputmode="decimal" value="${isFinite(t.upTo)? t.upTo : 999999999}"></div>
+              <div><button class="btn sm fed-cg-del" data-i="${i}">Delete</button></div>
+            </div>
+          `).join("")}
+          <button class="btn sm" id="addFedCapitalGainsBracket">Add tier</button>
+        </div>
+
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px">
+          <div class="between" style="margin-bottom:8px">
+            <div style="font-weight:700">California brackets</div>
+            <select class="s" id="caView" style="width:220px">
+              <option ${S.caView==="Single"?"selected":""}>Single</option>
+              <option ${S.caView==="Head of Household"?"selected":""}>Head of Household</option>
+              <option ${S.caView==="Married Filing Jointly"?"selected":""}>Married Filing Jointly</option>
+            </select>
+          </div>
+          ${(S.caBrackets[S.caView]||DEFAULT_CA[S.caView]||[]).map((t,i)=>`
+            <div class="row r3" style="align-items:end;margin-bottom:6px">
+              <div><label class="l">Rate #${i+1}</label><div class="between"><input class="t ca-rate" data-i="${i}" type="text" inputmode="decimal" value="${(t.rate*100).toFixed(2)}"><span class="mut">%</span></div></div>
+              <div><label class="l">Up to ($)</label><input class="t ca-up" data-i="${i}" type="text" inputmode="decimal" value="${isFinite(t.upTo)? t.upTo : 999999999}"></div>
+              <div><button class="btn sm ca-del" data-i="${i}">Delete</button></div>
+            </div>
+          `).join("")}
+          <button class="btn sm" id="addCABracket">Add tier</button>
+        </div>
+
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px">
+          <div style="font-weight:700;margin-bottom:8px">Brokerage Income & Additional Taxes</div>
+          <div class="row r3">
+            <div><label class="l">NIIT rate</label><div class="between"><input class="t" id="niitRate" type="text" inputmode="decimal" value="${(S.niitRate*100).toFixed(2)}"><span class="mut">%</span></div></div>
+            <div><label class="l">NIIT threshold (${S.filingMode==='Married Filing Jointly'?'MFJ':'Single/HoH'})</label><input class="t" id="niitThreshold" type="text" inputmode="decimal" value="${S.filingMode==='Married Filing Jointly'? S.niitThresholdMFJ : S.niitThresholdSingle}"></div>
+            <div><label class="l">Taxable brokerage income yield</label><div class="between"><input class="t" id="estInvestmentYield" type="text" inputmode="decimal" value="${(S.estInvestmentYield*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          </div>
+          <div class="note" style="margin-top:4px">Simple model: taxable brokerage income is estimated as yield × taxable balance, taxed as long-term capital gains federally, taxed as ordinary income by California, and used as the NIIT income base. NIIT thresholds are <b>nominal</b> (not CPI-indexed), so they shrink in real terms in projections.</div>
+          <div class="row r2" style="margin-top:8px">
+            <div><label class="l">CA Mental Health Tax threshold</label><input class="t" id="caMHThreshold" type="text" inputmode="decimal" value="${S.caMentalHealthThreshold}"></div>
+            <div><label class="l">CA Mental Health Tax rate</label><div class="between"><input class="t" id="caMHRate" type="text" inputmode="decimal" value="${(S.caMentalHealthRate*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          </div>
+          <div class="note" style="margin-top:4px">CA Mental Health Services Tax (Prop 63): 1% on taxable income over $1M. This threshold is <b>nominal</b> (not CPI-indexed), so in projections it shrinks in real terms — more income becomes subject over time.</div>
+        </div>
+
+        <div class="mut" style="margin-top:12px;font-size:13px">
+          Federal ordinary taxable income: <b>${cur(taxes.taxableIncomeFed)}</b> · Federal LTCG brokerage income: <b>${cur(taxes.brokerageIncome)}</b> · Taxable income (CA): <b>${cur(taxes.taxableIncomeCA)}</b><br/>
+          Est. federal: <b>${cur(taxes.federalTax)}</b> · CA brackets: <b>${cur(taxes.stateTax)}</b>${caMHAmount > 0 ? ` · CA MH: <b>${cur(caMHAmount)}</b>` : ''} · Payroll: <b>${cur(taxes.payrollTax)}</b> · NIIT: <b>${cur(niitAmount)}</b><br/>
+          Net income after all taxes: <b>${cur(netAfterAllTaxes)}</b>
+        </div>
+        <details id="tax-breakdown-details" ${S.showTaxBreakdown ? 'open' : ''}>
+            <summary id="toggleTaxBreakdown">Show tax breakdown</summary>
+            <div class="breakdown">
+                <div class="breakdown-grid">
+                    <div class="label">Gross Annual Income</div><div class="value">${cur(taxes.grossTotal)}</div>
+                    <div class="label">(-) Pre-tax Contributions</div><div class="value">${cur(taxes.preTaxTotal)}</div>
+                    <div class="label total">Wages (AGI)</div><div class="value total">${cur(taxes.wagesA + taxes.wagesB)}</div>
+
+                    <div class="label" style="font-weight:700; grid-column: 1 / -1; margin-top: 8px;">Federal Tax</div>
+                    <div class="label">Wages</div><div class="value">${cur(taxes.wagesA + taxes.wagesB)}</div>
+                    <div class="label">(-) ${S.filingMode==='Two Singles (Domestic Partners)' ? (S.fedDeductionTypeA==='itemized'||S.fedDeductionTypeB==='itemized'?'Deductions (A+B)':'Standard Deductions (A+B)') : (S.fedDeductionType==='itemized'?'Itemized Deduction':'Standard Deduction')}</div><div class="value">${cur(S.filingMode==='Two Singles (Domestic Partners)' ? ((S.fedDeductionTypeA==='itemized'?(S.fedItemizedAmountA||0):(S.federalFilingA==='Head of Household'?S.stdDedHoH:S.stdDedSingle))+(S.fedDeductionTypeB==='itemized'?(S.fedItemizedAmountB||0):(S.federalFilingB==='Head of Household'?S.stdDedHoH:S.stdDedSingle))) : (S.fedDeductionType==='itemized' ? (S.fedItemizedAmount||0) : (S.filingMode === 'Single' ? S.stdDedSingle : S.filingMode === 'Head of Household' ? S.stdDedHoH : S.stdDedMFJ)))}</div>
+                    <div class="label total">Ordinary Taxable Income (Federal)</div><div class="value total">${cur(taxes.taxableIncomeFed)}</div>
+                    ${(taxes.fedBreakdown.A ? [...taxes.fedBreakdown.A, ...taxes.fedBreakdown.B] : taxes.fedBreakdown).map(b => `
+                        <div class="label sub-value">${pct(b.rate)} bracket</div>
+                        <div class="sub-value">${cur(b.taxOnAmount)}</div>
+                    `).join('')}
+                    <div class="label">Taxable Brokerage Income (LTCG bucket)</div><div class="value">${cur(taxes.brokerageIncome)}</div>
+                    <div class="label">Federal Ordinary Tax</div><div class="value">${cur(taxes.federalOrdinaryTax)}</div>
+                    <div class="label">Federal LTCG Tax</div><div class="value">${cur(taxes.federalCapitalGainsTax)}</div>
+                    <div class="label total">Total Federal Tax</div><div class="value total">${cur(taxes.federalTax)}</div>
+
+                    <div class="label" style="font-weight:700; grid-column: 1 / -1; margin-top: 8px;">California Tax</div>
+                    <div class="label">Wages</div><div class="value">${cur(taxes.wagesA + taxes.wagesB)}</div>
+                    <div class="label">(+) Taxable Brokerage Income</div><div class="value">${cur(taxes.brokerageIncome)}</div>
+                    <div class="label">(-) ${S.caDeductionType==='itemized'?'Itemized':'Standard'} Deduction</div><div class="value">${cur(S.caDeductionType==='itemized' ? (S.caItemizedAmount||0) : (S.filingMode === 'Single' ? S.stdDedCA_Single : S.filingMode === 'Head of Household' ? S.stdDedCA_HoH : S.stdDedCA_MFJ))}</div>
+                    <div class="label total">Taxable Income (CA)</div><div class="value total">${cur(taxes.taxableIncomeCA)}</div>
+                     ${taxes.caBreakdown.map(b => `
+                        <div class="label sub-value">${pct(b.rate)} bracket</div>
+                        <div class="sub-value">${cur(b.taxOnAmount)}</div>
+                    `).join('')}
+                    <div class="label total">CA Bracket Tax</div><div class="value total">${cur(taxes.stateTax)}</div>
+
+                    <div class="label" style="font-weight:700; grid-column: 1 / -1; margin-top: 8px;">CA Mental Health Services Tax</div>
+                    <div class="label">Taxable income (CA)</div><div class="value">${cur(taxes.taxableIncomeCA)}</div>
+                    <div class="label">Threshold (nominal, not CPI-indexed)</div><div class="value">${cur(S.caMentalHealthThreshold)}</div>
+                    <div class="label total">Mental Health Tax (${pct(S.caMentalHealthRate)})</div><div class="value total">${cur(caMHAmount)}</div>
+                    <div class="label total" style="margin-top:4px">Total CA Tax (brackets + MH)</div><div class="value total">${cur(taxes.stateTax + caMHAmount)}</div>
+                </div>
+            </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="hd">Portfolio & 401(k) routing</div>
+      <div class="bd">
+        <div class="row r3">
+          <div><label class="l">Starting Taxable ($)</label><input class="t" id="startTaxable" type="text" inputmode="decimal" value="${S.startTaxable}"></div>
+          <div><label class="l">Starting Deferred ($)</label><input class="t" id="startDeferred" type="text" inputmode="decimal" value="${S.startDeferred}"></div>
+          <div><label class="l">Starting Roth ($)</label><input class="t" id="startRoth" type="text" inputmode="decimal" value="${S.startRoth}"></div>
+        </div>
+        <div class="mut" style="font-size:12px;margin-top:8px">Savings are now automatically routed to prioritize filling available after-tax 401(k) space (Mega Backdoor Roth) first. Any remaining savings go to your taxable account.</div>
+        <div class="row r3" style="margin-top:8px">
+          <div><label class="l">Taxable nominal return</label><div class="between"><input class="t" id="retTaxable" type="text" inputmode="decimal" value="${(S.retTaxable*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          <div><label class="l">Deferred nominal return</label><div class="between"><input class="t" id="retDeferred" type="text" inputmode="decimal" value="${(S.retDeferred*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          <div><label class="l">Roth nominal return</label><div class="between"><input class="t" id="retRoth" type="text" inputmode="decimal" value="${(S.retRoth*100).toFixed(2)}"><span class="mut">%</span></div></div>
+        </div>
+        <div class="row r3" style="margin-top:8px">
+          <div><label class="l">Residual drag (Taxable)</label><div class="between"><input class="t" id="taxDragTaxable" type="text" inputmode="decimal" value="${(S.taxDragTaxable*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          <div><label class="l">Employer match rate</label><div class="between"><input class="t" id="matchRate" type="text" inputmode="decimal" value="${(S.matchRate*100).toFixed(2)}"><span class="mut">%</span></div></div>
+          <div><label class="l">Match up to % salary</label><div class="between"><input class="t" id="matchUpToSalaryPct" type="text" inputmode="decimal" value="${(S.matchUpToSalaryPct*100).toFixed(2)}"><span class="mut">%</span></div></div>
+        </div>
+        <div class="note" style="margin-top:4px">Use residual drag only for extra taxable-account haircut not already captured by explicit brokerage-income taxes. In many cases this can be set to 0%.</div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <div></div>
+      <button class="btn-lg btn-next" id="nav-to-budget">Next: Budget →</button>
+    </div>
+  `;
+  }
+
+  if (S.tab === 'budget') {
+  tabHTML = `
+    <div class="card">
+      <div class="hd">Monthly Budget</div>
+      <div class="bd">
+        ${`
+          <div class="between" style="margin-bottom:8px">
+            <label class="mut" style="font-size:12px"><input type="checkbox" id="cutWants" ${S.cutWants?"checked":""}> Cut all wants (route to savings)</label>
+            <div class="note">Wants set to $0; saved by allocation (caps enforced).</div>
+          </div>
+
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th style="width:40px;"></th>
+                <th style="width:25%">Line item</th>
+                <th style="width:15%; text-align:right">Amount</th>
+                <th style="width:15%; text-align:center">Type</th>
+                <th style="width:10%; text-align:center">Nominal <span class="tooltip-trigger" title="Check for fixed-dollar amounts (e.g., mortgage). These shrink in real purchasing power over time.">(?)</span></th>
+                <th style="width:10%; text-align:center">Start <span class="tooltip-trigger" title="The age when a temporary expense begins. Leave blank for permanent items.">(?)</span></th>
+                <th style="width:10%; text-align:center">End <span class="tooltip-trigger" title="The age when a temporary expense ends. Leave blank for permanent items.">(?)</span></th>
+                <th style="width:10%; text-align:center">At</th>
+                <th style="width:10%; text-align:right">Impact</th>
+                <th style="width:60px"></th>
+              </tr></thead>
+              <tbody id="budget-table-body">
+                ${S.budget.map(row => {
+                  const hasRange = row.kind !== 'One-time';
+                  const isOneTime = row.kind === 'One-time';
+                  return `
+                  <tr class="budget-row" draggable="true" data-id="${row.id}">
+                    <td class="drag-handle" style="cursor:move;text-align:center;color:var(--mut2);font-size:14px;opacity:.6">&#9776;</td>
+                    <td>
+                      <input class="t b-name" data-id="${row.id}" name="b-name-${row.id}" type="text" value="${row.name||""}">
+                    </td>
+                    <td style="text-align:right">
+                      <input class="t b-amt" data-id="${row.id}" name="b-amt-${row.id}" type="text" inputmode="decimal" value="${row.amount||0}">
+                    </td>
+                    <td style="text-align:center">
+                      <select class="s b-kind" data-id="${row.id}" name="b-kind-${row.id}">
+                        <option ${row.kind==="Need"?"selected":""}>Need</option>
+                        <option ${row.kind==="Want"?"selected":""}>Want</option>
+                        <option ${row.kind==="Recurring"?"selected":""}>Recurring</option>
+                        <option ${row.kind==="One-time"?"selected":""}>One-time</option>
+                        <option ${row.kind==="RetirementRecurring"?"selected":""}>RetirementRecurring</option>
+                      </select>
+                    </td>
+                    <td style="text-align:center"><input class="b-nom" data-id="${row.id}" name="b-nom-${row.id}" type="checkbox" ${row.isNominal?"checked":""}></td>
+                    <td style="text-align:center"><input class="t b-start" data-id="${row.id}" name="b-start-${row.id}" type="text" inputmode="decimal" value="${row.startAge??""}" ${hasRange?'':'disabled style="background:var(--bg2);opacity:.5"'}></td>
+                    <td style="text-align:center"><input class="t b-end" data-id="${row.id}" name="b-end-${row.id}" type="text" inputmode="decimal" value="${row.endAge??""}" ${hasRange?'':'disabled style="background:var(--bg2);opacity:.5"'}></td>
+                    <td style="text-align:center"><input class="t b-at" data-id="${row.id}" name="b-at-${row.id}" type="text" inputmode="decimal" value="${row.atAge??""}" ${isOneTime?'':'disabled style="background:var(--bg2);opacity:.5"'}></td>
+                    <td style="text-align:right; font-size:12px;">${perImpact[row.id]==null? "—" : `+${perImpact[row.id].toFixed(3)}y`}</td>
+                    <td style="text-align:center"><button class="btn sm b-del" data-id="${row.id}">Delete</button></td>
+                  </tr>
+                `}).join("")}
+              </tbody>
+            </table>
+          </div>
+          <div class="between" style="margin-top:8px">
+            <button class="btn" id="addBudget">+ Add line item</button>
+            <div class="note">Impact = extra years this expense delays FI.</div>
+          </div>
+        `}
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="hd">Monthly Savings</div>
+      <div class="bd">
+        <div style="font-size:20px;font-weight:700;margin-bottom:8px">${cur(monthlySavings)}</div>
+        <details id="savings-breakdown-details" ${S.showSavingsBreakdown ? 'open' : ''}>
+            <summary id="toggleSavingsBreakdown">Show savings breakdown</summary>
+            <div class="breakdown">
+                <div class="breakdown-grid">
+                    <div class="label">Net Monthly Income</div><div class="value">${cur(netAfterAllTaxes / 12)}</div>
+                    <div class="label">(-) Needs</div><div class="value">${cur(monthlyNeeds)}</div>
+                    <div class="label">(-) Wants</div><div class="value">${cur(S.cutWants ? 0 : monthlyWants)}</div>
+                    <div class="label">(-) Current Event Costs</div><div class="value">${cur(currentMonthlyEventCosts)}</div>
+                    <div class="label total">Total Post-Tax Monthly Savings</div><div class="value total">${cur(monthlySavings)}</div>
+
+                    <div class="label" style="font-weight:700; grid-column: 1 / -1; margin-top: 8px;">Total Monthly Growth</div>
+                    <div class="label">Pre-tax (to Deferred)</div><div class="value">${cur(monthlyPreTax)}</div>
+                    <div class="label">(+) Employer Match (to Deferred)</div><div class="value">${cur(allocResult.mMatch)}</div>
+                    <div class="label">Post-tax (to Roth)</div><div class="value">${cur(allocResult.mRoth)}</div>
+                    <div class="label">Post-tax (to Taxable)</div><div class="value">${cur(allocResult.mTaxable)}</div>
+                    <div class="label total">Total</div><div class="value total">${cur(monthlyPreTax + (allocResult.mMatch||0) + (allocResult.mRoth||0) + (allocResult.mTaxable||0))}</div>
+                </div>
+            </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="hd">Retirement Spending</div>
+      <div class="bd">
+        <div style="margin-bottom:12px">
+          <label class="l">Retirement annual spending (today's $)</label>
+          <div class="between" style="gap:8px">
+            <input class="t" id="retirementAnnualSpend" type="text" inputmode="decimal" value="${S.retirementAnnualSpend ?? defaultAnnualSpend}">
+            <div class="note">Defaults to current plan's annual expenses</div>
+          </div>
+        </div>
+        <div style="font-weight:700;margin-bottom:6px">Healthcare (Retirement)</div>
+        <div class="row r3">
+          <div><label class="l">Medicare age</label><input class="t" id="medicareAge" type="text" inputmode="decimal" value="${S.medicareAge}"></div>
+          <div><label class="l">Pre-Medicare $/mo</label><input class="t" id="preMedicareMonthly" type="text" inputmode="decimal" value="${S.preMedicareMonthly}"></div>
+          <div><label class="l">Post-Medicare $/mo</label><input class="t" id="postMedicareMonthly" type="text" inputmode="decimal" value="${S.postMedicareMonthly}"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <button class="btn-lg btn-back" id="nav-to-income">← Income & Taxes</button>
+      <button class="btn-lg btn-next" id="nav-to-projections">See My Projections →</button>
+    </div>
+  `;
+  }
+
+  if (S.tab === 'projections') {
+  tabHTML = `
+    <div class="row r3">
+      <div class="stat"><div class="k">Years to FI</div><div class="v">${yearsToFI!=null? yearsToFI.toFixed(2) : "&gt;60"}</div></div>
+      <div class="stat"><div class="k">Retirement age</div><div class="v">${retireAge? retireAge.toFixed(2) : "—"}</div></div>
+      <div class="stat"><div class="k">Target nest egg (today's $)</div><div class="v">${cur(targetNestEggReal)}</div></div>
+    </div>
+    <div class="row r3" style="margin-top:8px">
+      <div class="stat"><div class="k">Monthly needs</div><div class="v">${cur(monthlyNeeds)}</div></div>
+      <div class="stat"><div class="k">Monthly wants</div><div class="v">${cur(monthlyWants)}</div></div>
+      <div class="stat"><div class="k">Monthly savings</div><div class="v">${cur(monthlySavings)}</div></div>
+    </div>
+    <div class="row r3" style="margin-top:8px">
+      <div class="stat"><div class="k">Savings rate of net income</div><div class="v">${pct(netAfterAllTaxes>0 ? (monthlySavings*12)/netAfterAllTaxes : 0)}</div></div>
+      <div class="stat"><div class="k">Cut-all-wants improvement</div><div class="v">${cutWantsImpact!=null? `−${cutWantsImpact.toFixed(2)} yrs` : "—"}</div></div>
+      <div class="stat"><div class="k">Annual spend at retirement (today's $)</div><div class="v">${cur(projectedRealSpend)}</div></div>
+    </div>
+
+    ${(S.earlyRetirement.enabled && earlyRetireImpact.difference != null) ? `
+    <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px; background-color: var(--brand-light);">
+      <div style="font-weight:700;margin-bottom:6px">Early Retirement Impact</div>
+      <div class="row r3">
+          <div class="stat"><div class="k">Baseline FIRE Age</div><div class="v">${earlyRetireImpact.originalYears != null ? (S.currentAge + earlyRetireImpact.originalYears).toFixed(2) : 'N/A'}</div></div>
+          <div class="stat"><div class="k">New FIRE Age</div><div class="v">${earlyRetireImpact.newYears != null ? (S.currentAge + earlyRetireImpact.newYears).toFixed(2) : 'N/A'}</div></div>
+          <div class="stat"><div class="k">Impact on Goal</div><div class="v" style="color: ${earlyRetireImpact.difference > 0 ? 'var(--red)' : 'var(--green)'};">${earlyRetireImpact.difference > 0 ? '+' : ''}${earlyRetireImpact.difference.toFixed(2)} yrs</div></div>
+      </div>
+      <div class="note" style="margin-top: 8px;">Retiring Partner ${S.earlyRetirement.who} at age ${S.earlyRetirement.atAge} adds ${earlyRetireImpact.difference.toFixed(2)} years to the joint FIRE goal.</div>
+    </div>
+    ` : ''}
+
+    ${(S.workBreak.enabled && workBreakImpact.difference != null) ? `
+    <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px; background-color: var(--brand-light);">
+      <div style="font-weight:700;margin-bottom:6px">Work Break Impact</div>
+      <div class="row r3">
+          <div class="stat"><div class="k">Baseline FIRE Age</div><div class="v">${workBreakImpact.originalYears != null ? (S.currentAge + workBreakImpact.originalYears).toFixed(2) : 'N/A'}</div></div>
+          <div class="stat"><div class="k">New FIRE Age</div><div class="v">${workBreakImpact.newYears != null ? (S.currentAge + workBreakImpact.newYears).toFixed(2) : 'N/A'}</div></div>
+          <div class="stat"><div class="k">Impact on Goal</div><div class="v" style="color: ${workBreakImpact.difference > 0 ? 'var(--red)' : 'var(--green)'};">${workBreakImpact.difference > 0 ? '+' : ''}${workBreakImpact.difference.toFixed(2)} yrs</div></div>
+      </div>
+      <div class="note" style="margin-top: 8px;">${isOneEarner ? 'Taking a' : `${S.workBreak.who === 'A' ? 'Partner A takes a' : 'Partner B takes a'}`} ${S.workBreak.durationYears.toFixed(2)}-year break starting at age ${S.workBreak.atAge.toFixed(2)} ${isOneEarner ? '' : ''}changes the FIRE timeline by ${workBreakImpact.difference > 0 ? '+' : ''}${workBreakImpact.difference.toFixed(2)} years.</div>
+    </div>
+    ` : ''}
+
+    <div class="card" style="margin-top:16px">
+      <div class="hd">Portfolio Range Under Random Returns</div>
+      <div class="bd">
+        <div class="between" style="margin-bottom:8px">
+            <div class="mut">400 runs in today's dollars using the yearly savings and withdrawal schedule below</div>
+            <div class="flex">
+                <label class="l" style="margin-bottom:0;">Project until age:</label>
+                <input class="t" id="projectionCutoffAge" type="text" inputmode="decimal" value="${S.projectionCutoffAge}" style="width: 60px;">
+            </div>
+        </div>
+        <div class="svgwrap"><svg id="chart" viewBox="0 0 800 260" width="100%" height="100%"></svg></div>
+        <div class="row r3" style="margin-top:8px">
+          <div class="stat"><div class="k">End balance p10 (today's $)</div><div class="v">${cur(mc.p10)}</div></div>
+          <div class="stat"><div class="k">End balance median (today's $)</div><div class="v">${cur(mc.p50)}</div></div>
+          <div class="stat"><div class="k">End balance p90 (today's $)</div><div class="v">${cur(mc.p90)}</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="hd">Deterministic Baseline Projection</div>
+      <div class="bd">
+        <div class="mut" style="margin-bottom:8px">Single baseline path using your configured income, expenses, taxes, and expected returns.</div>
+        <div class="svgwrap"><svg id="income-chart" viewBox="0 0 800 260" width="100%" height="100%"></svg></div>
+        <div class="data-table-wrap" style="margin-top:12px">
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:center;">Age</th>
+                <th style="text-align:right;">Total Assets</th>
+                <th style="text-align:right;">Invest. Income</th>
+                <th style="text-align:right;">Earned A</th>
+                <th style="text-align:right;">Earned B</th>
+                <th style="text-align:right;">Expenditure</th>
+                <th style="text-align:right;">Savings</th>
+                <th style="text-align:right;">Net Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${fullProjection.map(p => `
+                <tr>
+                  <td style="text-align:center;">${p.age}</td>
+                  <td style="text-align:right;">${cur(p.assets)}</td>
+                  <td style="text-align:right;">${cur(p.investmentIncome)}</td>
+                  <td style="text-align:right;">${cur(p.earnedIncomeA)}</td>
+                  <td style="text-align:right;">${cur(p.earnedIncomeB)}</td>
+                  <td style="text-align:right;">${cur(p.expenditure)}</td>
+                  <td style="text-align:right;">${cur(p.savings)}</td>
+                  <td style="text-align:right;color:${p.netChange>=0?'var(--green)':'var(--red)'}">${cur(p.netChange)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <button class="btn-lg btn-back" id="nav-to-budget">← Back to Budget</button>
+      <div></div>
+    </div>
+  `;
+  }
+
+  setHTML(C, tabHTML);
+
+  /* ===== Listeners (LEFT) ===== */
+  const parseNumericDraft = raw => {
+    const s = String(raw ?? '').replace(/,/g,'').trim();
+    if (s === '') return { state: 'blank' };
+    if (s === '-' || s === '.' || s === '-.' || /^-?\d+\.$/.test(s)) return { state: 'transient' };
+    if (!/^-?(?:\d+|\d*\.\d+)$/.test(s)) return { state: 'invalid' };
+    const value = Number(s);
+    return Number.isFinite(value) ? { state: 'number', value } : { state: 'invalid' };
+  };
+  const bindDraftNumeric = (el, commit, { blank = 'zero' } = {}) => {
+    if (!el) return;
+    const commitParsed = parsed => {
+      if (parsed.state === 'number') {
+        commit(parsed.value);
+        return true;
+      }
+      if (parsed.state === 'blank') {
+        if (blank === 'zero') {
+          commit(0);
+          return true;
+        }
+        if (blank === 'undefined') {
+          commit(undefined);
+          return true;
+        }
+      }
+      return false;
+    };
+    el.oninput = e => {
+      const parsed = parseNumericDraft(e.target.value);
+      if (parsed.state === 'number') {
+        commit(parsed.value);
+        render();
+      }
+    };
+    el.onblur = e => {
+      const parsed = parseNumericDraft(e.target.value);
+      const committed = commitParsed(parsed);
+      if (committed || parsed.state !== 'number') render();
+    };
+  };
+  const bindNumPct = (id, key, scale=1, options={}) => bindDraftNumeric(document.getElementById(id), value => { S[key] = value/scale; }, options);
+  const bindNum = (id, key) => bindNumPct(id,key,1);
+  bindNum("currentAge","currentAge");
+  bindNumPct("inflation","inflation",100); bindNumPct("withdrawalRate","withdrawalRate",100); bindNumPct("volatility","volatility",100);
+  const st=document.getElementById("stressTest"); if(st) st.onchange=e=>{S.stressTest=e.target.checked; render();};
+  const fm=document.getElementById("filingMode"); if(fm) fm.onchange=e=>{S.filingMode=e.target.value; render();};
+
+  if(S.filingMode==="Two Singles (Domestic Partners)"){
+    const ffA=document.getElementById("federalFilingA"); if(ffA) ffA.onchange=e=>{S.federalFilingA=e.target.value; render();};
+    const ffB=document.getElementById("federalFilingB"); if(ffB) ffB.onchange=e=>{S.federalFilingB=e.target.value; render();};
+    bindNum("grossIncomeA","grossIncomeA"); bindNum("preTaxContribA","preTaxContribA");
+    bindNum("grossIncomeB","grossIncomeB"); bindNum("preTaxContribB","preTaxContribB");
+    // Per-partner federal deduction type dropdowns
+    const fdtA=document.getElementById("fedDeductionTypeA"); if(fdtA) fdtA.onchange=e=>{ S.fedDeductionTypeA=e.target.value; render(); };
+    const fdtB=document.getElementById("fedDeductionTypeB"); if(fdtB) fdtB.onchange=e=>{ S.fedDeductionTypeB=e.target.value; render(); };
+    // CA deduction type (joint)
+    const cdt=document.getElementById("caDeductionType"); if(cdt) cdt.onchange=e=>{ S.caDeductionType=e.target.value; render(); };
+    // Partner A fed deduction amount
+    bindDraftNumeric(document.getElementById("fedDedAmountA"), v => { if(S.fedDeductionTypeA==='itemized') S.fedItemizedAmountA=v; else if(S.federalFilingA==="Head of Household") S.stdDedHoH=v; else S.stdDedSingle=v; });
+    // Partner B fed deduction amount
+    bindDraftNumeric(document.getElementById("fedDedAmountB"), v => { if(S.fedDeductionTypeB==='itemized') S.fedItemizedAmountB=v; else if(S.federalFilingB==="Head of Household") S.stdDedHoH=v; else S.stdDedSingle=v; });
+    // CA deduction amount (joint)
+    bindDraftNumeric(document.getElementById("caDedAmountDP"), v => { if(S.caDeductionType==='itemized') S.caItemizedAmount=v; else S.stdDedCA_MFJ=v; });
+  }else{
+    const gi = document.getElementById('grossIncome');
+    if (gi && S.filingMode !== 'Married Filing Jointly') bindDraftNumeric(gi, value => {
+        S.grossIncome = value;
+        if (S.filingMode === 'Single' || S.filingMode === 'Head of Household') {
+            S.grossIncomeA = S.grossIncome;
+            S.grossIncomeB = 0;
+        }
+    });
+    if (S.filingMode !== 'Married Filing Jointly') {
+      bindNum("preTaxContrib","preTaxContrib");
+    }
+    if (S.filingMode === 'Married Filing Jointly') {
+        const gia = document.getElementById('grossIncomeA');
+        if(gia) bindDraftNumeric(gia, value => {
+            S.grossIncomeA = value;
+            S.grossIncome = S.grossIncomeA + S.grossIncomeB;
+        });
+        const gib = document.getElementById('grossIncomeB');
+        if(gib) bindDraftNumeric(gib, value => {
+            S.grossIncomeB = value;
+            S.grossIncome = S.grossIncomeA + S.grossIncomeB;
+        });
+        bindNum("preTaxContribA","preTaxContribA");
+        bindNum("preTaxContribB","preTaxContribB");
+    }
+    // Deduction type dropdowns
+    const fdt2=document.getElementById("fedDeductionType"); if(fdt2) fdt2.onchange=e=>{ S.fedDeductionType=e.target.value; render(); };
+    const cdt2=document.getElementById("caDeductionType"); if(cdt2) cdt2.onchange=e=>{ S.caDeductionType=e.target.value; render(); };
+    // Deduction amount inputs
+    bindDraftNumeric(document.getElementById("fedDedAmount"), v => { if(S.fedDeductionType==='itemized') S.fedItemizedAmount=v; else if(S.filingMode==="Single") S.stdDedSingle=v; else if(S.filingMode==="Head of Household") S.stdDedHoH=v; else S.stdDedMFJ=v; });
+    bindDraftNumeric(document.getElementById("caDedAmount"), v => { if(S.caDeductionType==='itemized') S.caItemizedAmount=v; else if(S.filingMode==="Single") S.stdDedCA_Single=v; else if(S.filingMode==="Head of Household") S.stdDedCA_HoH=v; else S.stdDedCA_MFJ=v; });
+  }
+  
+  // Early Retirement Listeners
+  const erEnabled = document.getElementById('earlyRetirementEnabled');
+  if (erEnabled) erEnabled.onchange = e => { S.earlyRetirement.enabled = e.target.checked; render(); };
+  const erWho = document.getElementById('earlyRetirementWho');
+  if (erWho) erWho.onchange = e => { S.earlyRetirement.who = e.target.value; render(); };
+  const erAge = document.getElementById('earlyRetirementAtAge');
+  bindDraftNumeric(erAge, value => { S.earlyRetirement.atAge = value; });
+
+  // Work Break Listeners
+  const wbEnabled = document.getElementById('workBreakEnabled');
+  if (wbEnabled) wbEnabled.onchange = e => { S.workBreak.enabled = e.target.checked; render(); };
+  const wbWho = document.getElementById('workBreakWho');
+  if (wbWho) wbWho.onchange = e => { S.workBreak.who = e.target.value; render(); };
+  bindDraftNumeric(document.getElementById('workBreakAtAge'), value => { S.workBreak.atAge = value; });
+  bindDraftNumeric(document.getElementById('workBreakDurationYears'), value => { S.workBreak.durationYears = value; });
+
+  // Income Projection Listeners
+  const im=document.getElementById("incomeMode"); if(im) im.onchange=e=>{
+    S.incomeMode=e.target.value;
+    // Auto-populate 20-year schedule when switching to manual with empty schedules
+    if(S.incomeMode==='manual'){
+      const isOneEarner = S.filingMode==='Single'||S.filingMode==='Head of Household';
+      const baseA = isOneEarner ? S.grossIncome : S.grossIncomeA;
+      const baseB = isOneEarner ? 0 : S.grossIncomeB;
+      if(!S.incomeScheduleA || S.incomeScheduleA.length===0){
+        S.incomeScheduleA=[];
+        for(let y=0;y<20;y++) S.incomeScheduleA.push({id:uid(), age:S.currentAge+y, income:baseA});
+      }
+      if(!isOneEarner && (!S.incomeScheduleB || S.incomeScheduleB.length===0)){
+        S.incomeScheduleB=[];
+        for(let y=0;y<20;y++) S.incomeScheduleB.push({id:uid(), age:S.currentAge+y, income:baseB});
+      }
+    }
+    render();
+  };
+  bindNumPct("incomeRealGrowthA","incomeRealGrowthA",100);
+  bindNumPct("incomeRealGrowthB","incomeRealGrowthB",100);
+  // Manual schedule listeners
+  document.querySelectorAll(".sched-age-a").forEach(el=> bindDraftNumeric(el, value => { const i=+el.dataset.i; if(S.incomeScheduleA[i]) S.incomeScheduleA[i].age=value; }));
+  document.querySelectorAll(".sched-inc-a").forEach(el=> bindDraftNumeric(el, value => { const i=+el.dataset.i; if(S.incomeScheduleA[i]) S.incomeScheduleA[i].income=value; }));
+  document.querySelectorAll(".sched-del-a").forEach(el=> el.onclick=e=>{ const i=+el.dataset.i; S.incomeScheduleA.splice(i,1); render(); });
+  const schedAddA=document.getElementById("addSchedA"); if(schedAddA) schedAddA.onclick=()=>{ S.incomeScheduleA.push({id:uid(),age:S.currentAge+5,income:0}); render(); };
+  document.querySelectorAll(".sched-age-b").forEach(el=> bindDraftNumeric(el, value => { const i=+el.dataset.i; if(S.incomeScheduleB[i]) S.incomeScheduleB[i].age=value; }));
+  document.querySelectorAll(".sched-inc-b").forEach(el=> bindDraftNumeric(el, value => { const i=+el.dataset.i; if(S.incomeScheduleB[i]) S.incomeScheduleB[i].income=value; }));
+  document.querySelectorAll(".sched-del-b").forEach(el=> el.onclick=e=>{ const i=+el.dataset.i; S.incomeScheduleB.splice(i,1); render(); });
+  const schedAddB=document.getElementById("addSchedB"); if(schedAddB) schedAddB.onclick=()=>{ S.incomeScheduleB.push({id:uid(),age:S.currentAge+5,income:0}); render(); };
+
+  // NIIT & MH Tax bindings
+  bindNumPct("niitRate","niitRate",100);
+  bindDraftNumeric(document.getElementById("niitThreshold"), v => { if(S.filingMode==='Married Filing Jointly') S.niitThresholdMFJ=v; else S.niitThresholdSingle=v; });
+  bindNumPct("estInvestmentYield","estInvestmentYield",100);
+  bindNum("caMHThreshold","caMentalHealthThreshold");
+  bindNumPct("caMHRate","caMentalHealthRate",100);
+
+  bindNumPct("ssRate","ssRate",100); bindNum("ssCap","ssCap");
+  bindNumPct("medicareRate","medicareRate",100); bindNumPct("addlMedicareRate","addlMedicareRate",100);
+  bindNum("addlMedicareThresholdSingle","addlMedicareThresholdSingle"); bindNum("addlMedicareThresholdMFJ","addlMedicareThresholdMFJ");
+  bindNum("limitEmployeeDeferral","limitEmployeeDeferral"); bindNum("limitOverall401k","limitOverall401k");
+
+  // Federal brackets
+  const fv=document.getElementById("fedView"); if(fv) fv.onchange=e=>{
+    S.fedView=e.target.value;
+    if(!S.fedBrackets[S.fedView]) S.fedBrackets[S.fedView]=structuredClone(DEFAULT_FED[S.fedView]||[]);
+    render();
+  };
+  document.querySelectorAll(".fed-rate").forEach(el=> bindDraftNumeric(el, value => { const i=+el.dataset.i; const arr=S.fedBrackets[S.fedView]; arr[i].rate=value/100; fixBrackets(S.fedBrackets, S.fedView); }));
+  document.querySelectorAll(".fed-up").forEach(el=> bindDraftNumeric(el, value => { const i=+el.dataset.i; const arr=S.fedBrackets[S.fedView]; arr[i].upTo = (!isFinite(value) || value>=9.99e8) ? Infinity : Math.max(0,value); fixBrackets(S.fedBrackets, S.fedView); }));
+  document.querySelectorAll(".fed-del").forEach(el=> el.onclick=e=>{
+    const i=+e.target.dataset.i; const arr=S.fedBrackets[S.fedView]; if(arr.length>1){ arr.splice(i,1); fixBrackets(S.fedBrackets, S.fedView); render(); }
+  });
+  const addFed=document.getElementById("addFedBracket"); if(addFed) addFed.onclick=()=>{ S.fedBrackets[S.fedView].push({rate:0.37,upTo:Infinity}); fixBrackets(S.fedBrackets, S.fedView); render(); };
+
+  // Federal LTCG brackets
+  const fcv=document.getElementById("fedCapitalGainsView"); if(fcv) fcv.onchange=e=>{
+    S.fedCapitalGainsView=e.target.value;
+    if(!S.fedCapitalGainsBrackets[S.fedCapitalGainsView]) S.fedCapitalGainsBrackets[S.fedCapitalGainsView]=structuredClone(DEFAULT_FED_LTCG[S.fedCapitalGainsView]||[]);
+    render();
+  };
+  document.querySelectorAll(".fed-cg-rate").forEach(el=> bindDraftNumeric(el, value => { const i=+el.dataset.i; const arr=S.fedCapitalGainsBrackets[S.fedCapitalGainsView]; arr[i].rate=value/100; fixBrackets(S.fedCapitalGainsBrackets, S.fedCapitalGainsView); }));
+  document.querySelectorAll(".fed-cg-up").forEach(el=> bindDraftNumeric(el, value => { const i=+el.dataset.i; const arr=S.fedCapitalGainsBrackets[S.fedCapitalGainsView]; arr[i].upTo = (!isFinite(value) || value>=9.99e8) ? Infinity : Math.max(0,value); fixBrackets(S.fedCapitalGainsBrackets, S.fedCapitalGainsView); }));
+  document.querySelectorAll(".fed-cg-del").forEach(el=> el.onclick=e=>{
+    const i=+e.target.dataset.i; const arr=S.fedCapitalGainsBrackets[S.fedCapitalGainsView]; if(arr.length>1){ arr.splice(i,1); fixBrackets(S.fedCapitalGainsBrackets, S.fedCapitalGainsView); render(); }
+  });
+  const addFedCg=document.getElementById("addFedCapitalGainsBracket"); if(addFedCg) addFedCg.onclick=()=>{ S.fedCapitalGainsBrackets[S.fedCapitalGainsView].push({rate:0.20,upTo:Infinity}); fixBrackets(S.fedCapitalGainsBrackets, S.fedCapitalGainsView); render(); };
+
+  // CA brackets
+  const cv=document.getElementById("caView"); if(cv) cv.onchange=e=>{
+    S.caView=e.target.value;
+    if(!S.caBrackets[S.caView]) S.caBrackets[S.caView]=structuredClone(DEFAULT_CA[S.caView]||[]);
+    render();
+  };
+  document.querySelectorAll(".ca-rate").forEach(el=> bindDraftNumeric(el, value => { const i=+el.dataset.i; const arr=S.caBrackets[S.caView]; arr[i].rate=value/100; fixBrackets(S.caBrackets, S.caView); }));
+  document.querySelectorAll(".ca-up").forEach(el=> bindDraftNumeric(el, value => { const i=+el.dataset.i; const arr=S.caBrackets[S.caView]; arr[i].upTo = (!isFinite(value) || value>=9.99e8) ? Infinity : Math.max(0,value); fixBrackets(S.caBrackets, S.caView); }));
+  document.querySelectorAll(".ca-del").forEach(el=> el.onclick=e=>{
+    const i=+e.target.dataset.i; const arr=S.caBrackets[S.caView]; if(arr.length>1){ arr.splice(i,1); fixBrackets(S.caBrackets, S.caView); render(); }
+  });
+  const addCA=document.getElementById("addCABracket"); if(addCA) addCA.onclick=()=>{ S.caBrackets[S.caView].push({rate:0.123,upTo:Infinity}); fixBrackets(S.caBrackets, S.caView); render(); };
+
+  // Portfolio binds
+  bindNum("startTaxable","startTaxable"); bindNum("startDeferred","startDeferred"); bindNum("startRoth","startRoth");
+  bindNumPct("retTaxable","retTaxable",100); bindNumPct("retDeferred","retDeferred",100); bindNumPct("retRoth","retRoth",100);
+  bindNumPct("taxDragTaxable","taxDragTaxable",100); bindNumPct("matchRate","matchRate",100); bindNumPct("matchUpToSalaryPct","matchUpToSalaryPct",100);
+
+  // Healthcare binds (in summary tab)
+  bindNum("medicareAge","medicareAge"); bindNum("preMedicareMonthly","preMedicareMonthly"); bindNum("postMedicareMonthly","postMedicareMonthly");
+
+  // Core action buttons
+  const rst=document.getElementById("resetBtn"); 
+  if(rst) rst.onclick=()=>{ 
+    if(confirm("Are you sure you want to reset all fields to their default values?")) {
+        S = createDefaultState();
+        render();
+    }
+  };
+  const saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) saveBtn.onclick = saveToFile;
+  const loadInput = document.getElementById("loadFile");
+  if (loadInput) loadInput.onchange = handleFileLoad;
+  
+  // Breakdown toggles
+  const ttb = document.getElementById('tax-breakdown-details');
+  if(ttb) ttb.ontoggle = (e) => { S.showTaxBreakdown = e.target.open; };
+  const tsb = document.getElementById('savings-breakdown-details');
+  if(tsb) tsb.ontoggle = (e) => { S.showSavingsBreakdown = e.target.open; };
+
+
+  /* ===== Listeners (TABS + NAV) ===== */
+  const tb=(id,tab)=>{ const b=document.getElementById(id); if(b) b.onclick=()=>{S.tab=tab; window.scrollTo(0,0); render();}; };
+  tb("tab-income","income"); tb("tab-budget","budget"); tb("tab-projections","projections");
+  tb("nav-to-budget","budget"); tb("nav-to-income","income"); tb("nav-to-projections","projections");
+
+  // Budget table listeners
+  const cw=document.getElementById("cutWants"); if(cw) cw.onchange=e=>{ S.cutWants=e.target.checked; render(); };
+  const addB=document.getElementById("addBudget"); if(addB) addB.onclick=()=>{ S.budget.push({id:uid(),name:"New item",amount:0,kind:"Want", isNominal: false}); render(); };
+  document.querySelectorAll(".b-name").forEach(el=> el.oninput=e=>{ const it=S.budget.find(x=>x.id===el.dataset.id); if(it) it.name=e.target.value; }); // No re-render on name change
+  document.querySelectorAll(".b-amt").forEach(el=> bindDraftNumeric(el, value => { const it=S.budget.find(x=>x.id===el.dataset.id); if(it) it.amount=value; }));
+  document.querySelectorAll(".b-kind").forEach(el=> el.onchange=e=>{ const it=S.budget.find(x=>x.id===el.dataset.id); if(it) it.kind=e.target.value; render(); });
+  document.querySelectorAll(".b-nom").forEach(el=> el.onchange=e=>{ const it=S.budget.find(x=>x.id===el.dataset.id); if(it) it.isNominal=e.target.checked; render(); });
+  document.querySelectorAll(".b-start").forEach(el=> bindDraftNumeric(el, value => { const it=S.budget.find(x=>x.id===el.dataset.id); if(it) it.startAge = value; }, { blank: 'undefined' }));
+  document.querySelectorAll(".b-end").forEach(el=> bindDraftNumeric(el, value => { const it=S.budget.find(x=>x.id===el.dataset.id); if(it) it.endAge = value; }, { blank: 'undefined' }));
+  document.querySelectorAll(".b-at").forEach(el=> bindDraftNumeric(el, value => { const it=S.budget.find(x=>x.id===el.dataset.id); if(it) it.atAge = value; }, { blank: 'undefined' }));
+  document.querySelectorAll(".b-del").forEach(el=> el.onclick=e=>{ S.budget = S.budget.filter(x=>x.id!==e.target.dataset.id); render(); });
+
+  bindDraftNumeric(document.getElementById("retirementAnnualSpend"), value => { S.retirementAnnualSpend = value; }, { blank: 'undefined' });
+  bindNum("projectionCutoffAge", "projectionCutoffAge");
+
+
+  // Draw charts
+  if(S.tab==="projections"){
+    drawProjectionChart('chart', mc.bands, S.currentAge, deterministicBaseline);
+    drawIncomeChart('income-chart', chartProjectionData);
+  }
+  
+  if (S.tab === "budget") {
+    initDragAndDrop();
+  }
+}
+function fixBrackets(store, key){
+  const arr=store[key];
+  arr.forEach(b => { b.upTo = normalizeBracketUpTo(b.upTo); });
+  arr.sort((a,b)=> (normalizeBracketUpTo(a.upTo)===Infinity?1: normalizeBracketUpTo(b.upTo)===Infinity?-1: normalizeBracketUpTo(a.upTo)-normalizeBracketUpTo(b.upTo)));
+  if(arr.length > 0 && normalizeBracketUpTo(arr[arr.length-1].upTo)!==Infinity) arr[arr.length-1].upTo=Infinity;
+}
+
+/* ===== Charting Functions ===== */
+function drawProjectionChart(svgId, bands, currentAge, baseline=[]) {
+    const svg=document.getElementById(svgId);
+    if (!svg) return;
+    const W=800, H=260, P_TOP=10, P_BOT=30, P_LEFT=60, P_RIGHT=10;
+    const plotW = W - P_LEFT - P_RIGHT;
+    const plotH = H - P_TOP - P_BOT;
+
+    const maxVal = Math.max(...bands.map(b => b.p90), ...baseline.map(b => b.assets || 0), 1);
+    const minVal = 0;
+
+    const X = i => P_LEFT + plotW * (i / (bands.length - 1 || 1));
+    const Y = v => H - P_BOT - plotH * ((v - minVal) / Math.max(1, maxVal - minVal));
+
+    const path = (key) => bands.map((b, i) => `${i ? "L" : "M"}${X(i)},${Y(b[key])}`).join(" ");
+    const baselinePath = baseline.map((b, i) => `${i ? "L" : "M"}${X(i)},${Y(b.assets)}`).join(" ");
+    const area = [...bands.map((b, i) => `${i ? "L" : "M"}${X(i)},${Y(b.p90)}`),
+                  ...[...bands].reverse().map((b, i) => `L${X(bands.length - 1 - i)},${Y(b.p10)}`),
+                  "Z"].join(" ");
+
+    const numXLabels = 6;
+    const xLabels = Array.from({ length: numXLabels }).map((_, i) => {
+        const monthIndex = Math.floor((bands.length - 1) * (i / (numXLabels - 1)));
+        const age = currentAge + (bands[monthIndex]?.year || 0);
+        return `<text class="chart-label" x="${X(monthIndex)}" y="${H - P_BOT + 15}" text-anchor="middle">${age.toFixed(0)}</text>`;
+    }).join('');
+
+    const yLabels = `
+        <text class="chart-label" x="${P_LEFT - 8}" y="${Y(maxVal)}" text-anchor="end" dominant-baseline="middle">${cur(maxVal)}</text>
+        <text class="chart-label" x="${P_LEFT - 8}" y="${Y(0)}" text-anchor="end" dominant-baseline="middle">${cur(0)}</text>
+    `;
+
+    svg.innerHTML = `
+      <style>
+        .chart-label { font-size: 11px; fill: var(--mut); }
+        .cursor-line { stroke: var(--mut); stroke-width: 1; stroke-dasharray: 3 3; }
+        .cursor-text-bg { fill: #fff; stroke: var(--line); }
+        .cursor-text { font-size: 11px; fill: var(--ink); }
+        .cursor-text .label { fill: var(--mut); }
+      </style>
+      <rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>
+      <path d="${area}" fill="#eef2ff" opacity="0.9"/>
+      <path d="${path('p50')}" fill="none" stroke="var(--brand)" stroke-width="2.5"/>
+      ${baselinePath ? `<path d="${baselinePath}" fill="none" stroke="#0f172a" stroke-width="2" stroke-dasharray="6 4"/>` : ''}
+      <line x1="${P_LEFT}" y1="${H - P_BOT}" x2="${W - P_RIGHT}" y2="${H - P_BOT}" stroke="#cbd5e1"/>
+      <line x1="${P_LEFT}" y1="${P_TOP}" x2="${P_LEFT}" y2="${H - P_BOT}" stroke="#cbd5e1"/>
+      ${xLabels}
+      ${yLabels}
+      <text class="chart-label" x="${W/2}" y="${H - 5}" text-anchor="middle">Age</text>
+      <text class="chart-label" transform="translate(15, ${H/2}) rotate(-90)" text-anchor="middle">Portfolio Value (Today's $)</text>
+      <g class="legend" transform="translate(${P_LEFT + 10}, ${P_TOP + 10})">
+        <rect x="0" y="0" width="10" height="10" fill="#eef2ff"></rect>
+        <text x="15" y="10" class="chart-label">P10-P90 range</text>
+        <line x1="0" y1="24" x2="10" y2="24" stroke="var(--brand)" stroke-width="2.5"></line>
+        <text x="15" y="28" class="chart-label">Monte Carlo median</text>
+        <line x1="0" y1="42" x2="10" y2="42" stroke="#0f172a" stroke-width="2" stroke-dasharray="6 4"></line>
+        <text x="15" y="46" class="chart-label">Deterministic baseline</text>
+      </g>
+      <g id="cursor-group-${svgId}" style="display:none;">
+        <line id="cursor-line-${svgId}" class="cursor-line" y1="${P_TOP}" y2="${H - P_BOT}"/>
+        <rect id="cursor-text-bg-${svgId}" class="cursor-text-bg" width="118" height="84" rx="4"/>
+        <text id="cursor-text-age-${svgId}" class="cursor-text" font-weight="bold"></text>
+        <text id="cursor-text-p90-${svgId}" class="cursor-text"><tspan class="label">p90:</tspan> <tspan font-weight="500"></tspan></text>
+        <text id="cursor-text-p50-${svgId}" class="cursor-text"><tspan class="label">p50:</tspan> <tspan font-weight="500"></tspan></text>
+        <text id="cursor-text-p10-${svgId}" class="cursor-text"><tspan class="label">p10:</tspan> <tspan font-weight="500"></tspan></text>
+        <text id="cursor-text-base-${svgId}" class="cursor-text"><tspan class="label">base:</tspan> <tspan font-weight="500"></tspan></text>
+      </g>
+    `;
+
+    const cursorGroup = svg.querySelector(`#cursor-group-${svgId}`);
+    const cursorLine = svg.querySelector(`#cursor-line-${svgId}`);
+    const cursorTextBg = svg.querySelector(`#cursor-text-bg-${svgId}`);
+    const textAge = svg.querySelector(`#cursor-text-age-${svgId}`);
+    const textP90 = svg.querySelector(`#cursor-text-p90-${svgId} tspan:last-child`);
+    const textP50 = svg.querySelector(`#cursor-text-p50-${svgId} tspan:last-child`);
+    const textP10 = svg.querySelector(`#cursor-text-p10-${svgId} tspan:last-child`);
+    const textBase = svg.querySelector(`#cursor-text-base-${svgId} tspan:last-child`);
+
+    svg.addEventListener('mousemove', e => {
+        const rect = svg.getBoundingClientRect();
+        const mouseX = ((e.clientX - rect.left) / rect.width) * W;
+
+        if (mouseX < P_LEFT || mouseX > W - P_RIGHT) {
+            cursorGroup.style.display = 'none';
+            return;
+        }
+        cursorGroup.style.display = 'block';
+
+        const monthIndex = Math.round(((mouseX - P_LEFT) / plotW) * (bands.length - 1));
+        const data = bands[monthIndex];
+        if (!data) return;
+
+        const age = currentAge + data.year;
+        const xPos = X(monthIndex);
+
+        cursorLine.setAttribute('x1', xPos);
+        cursorLine.setAttribute('x2', xPos);
+
+        textAge.textContent = `Age: ${age}`;
+        textP90.textContent = cur(data.p90);
+        textP50.textContent = cur(data.p50);
+        textP10.textContent = cur(data.p10);
+        textBase.textContent = baseline[monthIndex] ? cur(baseline[monthIndex].assets) : '—';
+
+        let textX = xPos + 10;
+        if (textX + 128 > W) { textX = xPos - 128; }
+
+        cursorTextBg.setAttribute('x', textX);
+        cursorTextBg.setAttribute('y', P_TOP + 5);
+        textAge.setAttribute('x', textX + 8);
+        textAge.setAttribute('y', P_TOP + 20);
+        svg.querySelector(`#cursor-text-p90-${svgId}`).setAttribute('x', textX + 8);
+        svg.querySelector(`#cursor-text-p90-${svgId}`).setAttribute('y', P_TOP + 35);
+        svg.querySelector(`#cursor-text-p50-${svgId}`).setAttribute('x', textX + 8);
+        svg.querySelector(`#cursor-text-p50-${svgId}`).setAttribute('y', P_TOP + 49);
+        svg.querySelector(`#cursor-text-p10-${svgId}`).setAttribute('x', textX + 8);
+        svg.querySelector(`#cursor-text-p10-${svgId}`).setAttribute('y', P_TOP + 63);
+        svg.querySelector(`#cursor-text-base-${svgId}`).setAttribute('x', textX + 8);
+        svg.querySelector(`#cursor-text-base-${svgId}`).setAttribute('y', P_TOP + 77);
+    });
+
+    svg.addEventListener('mouseleave', () => { cursorGroup.style.display = 'none'; });
+}
+
+function drawIncomeChart(svgId, projectionData) {
+    const svg=document.getElementById(svgId);
+    if (!svg || projectionData.length === 0) return;
+    const W=800, H=260, P_TOP=10, P_BOT=30, P_LEFT=60, P_RIGHT=40;
+    const plotW = W - P_LEFT - P_RIGHT;
+    const plotH = H - P_TOP - P_BOT;
+
+    const maxVal = Math.max(...projectionData.map(d => Math.max(d.investmentIncome + d.earnedIncomeA + d.earnedIncomeB, d.expenditure)), 1);
+    const minVal = 0;
+
+    const X = i => P_LEFT + plotW * (i / (projectionData.length - 1 || 1));
+    const Y = v => H - P_BOT - plotH * (Math.max(0,v - minVal) / Math.max(1, maxVal - minVal));
+
+    const area = (key1, key2 = '', key3 = '') => {
+        const topPath = projectionData.map((d, i) => `${i ? "L" : "M"}${X(i)},${Y(d[key1] + (d[key2]||0) + (d[key3]||0))}`).join(" ");
+        const bottomPath = [...projectionData].reverse().map((d, i) => `L${X(projectionData.length - 1 - i)},${Y((d[key2]||0) + (d[key3]||0))}`).join(" ");
+        return `${topPath} ${bottomPath} Z`;
+    };
+    
+    const expPath = projectionData.map((d, i) => `${i ? "L" : "M"}${X(i)},${Y(d.expenditure)}`).join(" ");
+
+    const numXLabels = 6;
+    const xLabels = Array.from({ length: numXLabels }).map((_, i) => {
+        const index = Math.floor((projectionData.length - 1) * (i / (numXLabels - 1)));
+        const age = projectionData[index]?.age || 0;
+        return `<text class="chart-label" x="${X(index)}" y="${H - P_BOT + 15}" text-anchor="middle">${age.toFixed(0)}</text>`;
+    }).join('');
+
+    const yLabels = `
+        <text class="chart-label" x="${P_LEFT - 8}" y="${Y(maxVal)}" text-anchor="end" dominant-baseline="middle">${cur(maxVal)}</text>
+        <text class="chart-label" x="${P_LEFT - 8}" y="${Y(0)}" text-anchor="end" dominant-baseline="middle">${cur(0)}</text>
+    `;
+
+    svg.innerHTML = `
+      <style>
+        .chart-label { font-size: 11px; fill: var(--mut); }
+        .cursor-line { stroke: var(--mut); stroke-width: 1; stroke-dasharray: 3 3; }
+        .cursor-text-bg { fill: #fff; stroke: var(--line); }
+        .cursor-text { font-size: 11px; fill: var(--ink); }
+      </style>
+      <rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>
+      <path d="${area('earnedIncomeB', 'earnedIncomeA', 'investmentIncome')}" fill="#a7f3d0" opacity="0.8"/>
+      <path d="${area('earnedIncomeA', 'investmentIncome')}" fill="#6ee7b7" opacity="0.8"/>
+      <path d="${area('investmentIncome')}" fill="#2dd4bf" opacity="0.8"/>
+      <path d="${expPath}" fill="none" stroke="#ef4444" stroke-width="2"/>
+      <line x1="${P_LEFT}" y1="${H - P_BOT}" x2="${W - P_RIGHT}" y2="${H - P_BOT}" stroke="#cbd5e1"/>
+      <line x1="${P_LEFT}" y1="${P_TOP}" x2="${P_LEFT}" y2="${H - P_BOT}" stroke="#cbd5e1"/>
+      ${xLabels}
+      ${yLabels}
+      <text class="chart-label" x="${W/2}" y="${H - 5}" text-anchor="middle">Age</text>
+      <text class="chart-label" transform="translate(15, ${H/2}) rotate(-90)" text-anchor="middle">Annual Amount (Today's $)</text>
+      
+      <g class="legend" transform="translate(${W - P_RIGHT + 5}, ${P_TOP})">
+          <rect x="0" y="0" width="10" height="10" fill="#a7f3d0"></rect>
+          <text x="15" y="10" class="chart-label">Earned B</text>
+          <rect x="0" y="15" width="10" height="10" fill="#6ee7b7"></rect>
+          <text x="15" y="25" class="chart-label">Earned A</text>
+          <rect x="0" y="30" width="10" height="10" fill="#2dd4bf"></rect>
+          <text x="15" y="40" class="chart-label">Invest</text>
+          <line x1="0" y1="50" x2="10" y2="50" stroke="#ef4444" stroke-width="2"></line>
+          <text x="15" y="54" class="chart-label">Expend</text>
+      </g>
+
+      <g id="cursor-group-${svgId}" style="display:none;">
+        <line id="cursor-line-${svgId}" class="cursor-line" y1="${P_TOP}" y2="${H - P_BOT}"/>
+        <rect id="cursor-text-bg-${svgId}" class="cursor-text-bg" width="110" height="85" rx="4"/>
+        <text id="cursor-text-age-${svgId}" class="cursor-text" font-weight="bold"></text>
+        <text id="cursor-text-invest-${svgId}" class="cursor-text" fill="#2dd4bf"><tspan>Invest:</tspan> <tspan font-weight="500"></tspan></text>
+        <text id="cursor-text-earnedA-${svgId}" class="cursor-text" fill="#6ee7b7"><tspan>Earned A:</tspan> <tspan font-weight="500"></tspan></text>
+        <text id="cursor-text-earnedB-${svgId}" class="cursor-text" fill="#a7f3d0"><tspan>Earned B:</tspan> <tspan font-weight="500"></tspan></text>
+        <text id="cursor-text-exp-${svgId}" class="cursor-text" fill="#ef4444"><tspan>Expend:</tspan> <tspan font-weight="500"></tspan></text>
+      </g>
+    `;
+    
+    const cursorGroup = svg.querySelector(`#cursor-group-${svgId}`);
+    const cursorLine = svg.querySelector(`#cursor-line-${svgId}`);
+    const cursorTextBg = svg.querySelector(`#cursor-text-bg-${svgId}`);
+    const textAge = svg.querySelector(`#cursor-text-age-${svgId}`);
+    const textInvest = svg.querySelector(`#cursor-text-invest-${svgId} tspan:last-child`);
+    const textEarnedA = svg.querySelector(`#cursor-text-earnedA-${svgId} tspan:last-child`);
+    const textEarnedB = svg.querySelector(`#cursor-text-earnedB-${svgId} tspan:last-child`);
+    const textExp = svg.querySelector(`#cursor-text-exp-${svgId} tspan:last-child`);
+
+    svg.addEventListener('mousemove', e => {
+        const rect = svg.getBoundingClientRect();
+        const mouseX = ((e.clientX - rect.left) / rect.width) * W;
+
+        if (mouseX < P_LEFT || mouseX > W - P_RIGHT) {
+            cursorGroup.style.display = 'none';
+            return;
+        }
+        cursorGroup.style.display = 'block';
+
+        const index = Math.round(((mouseX - P_LEFT) / plotW) * (projectionData.length - 1));
+        const data = projectionData[index];
+        if (!data) return;
+
+        const xPos = X(index);
+        cursorLine.setAttribute('x1', xPos);
+        cursorLine.setAttribute('x2', xPos);
+
+        textAge.textContent = `Age: ${data.age.toFixed(1)}`;
+        textInvest.textContent = cur(data.investmentIncome);
+        textEarnedA.textContent = cur(data.earnedIncomeA);
+        textEarnedB.textContent = cur(data.earnedIncomeB);
+        textExp.textContent = cur(data.expenditure);
+        
+        let textX = xPos + 10;
+        if (textX + 120 > W) { textX = xPos - 120; }
+
+        cursorTextBg.setAttribute('x', textX);
+        cursorTextBg.setAttribute('y', P_TOP + 5);
+        textAge.setAttribute('x', textX + 8);
+        textAge.setAttribute('y', P_TOP + 20);
+        svg.querySelector(`#cursor-text-invest-${svgId}`).setAttribute('x', textX + 8);
+        svg.querySelector(`#cursor-text-invest-${svgId}`).setAttribute('y', P_TOP + 35);
+        svg.querySelector(`#cursor-text-earnedA-${svgId}`).setAttribute('x', textX + 8);
+        svg.querySelector(`#cursor-text-earnedA-${svgId}`).setAttribute('y', P_TOP + 50);
+        svg.querySelector(`#cursor-text-earnedB-${svgId}`).setAttribute('x', textX + 8);
+        svg.querySelector(`#cursor-text-earnedB-${svgId}`).setAttribute('y', P_TOP + 65);
+        svg.querySelector(`#cursor-text-exp-${svgId}`).setAttribute('x', textX + 8);
+        svg.querySelector(`#cursor-text-exp-${svgId}`).setAttribute('y', P_TOP + 80);
+    });
+
+    svg.addEventListener('mouseleave', () => { cursorGroup.style.display = 'none'; });
+}
+
+
+/* ===== Drag and Drop for Budget Items ===== */
+function initDragAndDrop() {
+    const budgetTableBody = document.getElementById("budget-table-body");
+    if (!budgetTableBody) return;
+
+    let draggedItemId = null;
+
+    // Use event delegation for drag events on the table body
+    budgetTableBody.addEventListener('dragstart', e => {
+        const row = e.target.closest('tr.budget-row');
+        if (row) {
+            draggedItemId = row.dataset.id;
+            // Add a slight delay to allow the browser to create the drag image
+            setTimeout(() => {
+                row.classList.add('dragging');
+            }, 0);
+        }
+    });
+
+    budgetTableBody.addEventListener('dragend', e => {
+        const row = e.target.closest('tr.budget-row');
+        if (row) {
+            row.classList.remove('dragging');
+        }
+        draggedItemId = null; // Clear dragged item on drag end
+    });
+
+    budgetTableBody.addEventListener('dragover', e => {
+        e.preventDefault(); // Necessary to allow dropping
+        const targetRow = e.target.closest('tr.budget-row');
+        if (!targetRow || targetRow.dataset.id === draggedItemId) return;
+        
+        // Clear previous indicators
+        document.querySelectorAll('.drop-indicator-top, .drop-indicator-bottom').forEach(ind => {
+            ind.classList.remove('drop-indicator-top', 'drop-indicator-bottom');
+        });
+
+        const rect = targetRow.getBoundingClientRect();
+        const offset = e.clientY - rect.top - (rect.height / 2);
+
+        if (offset < 0) {
+            targetRow.classList.add('drop-indicator-top');
+        } else {
+            targetRow.classList.add('drop-indicator-bottom');
+        }
+    });
+    
+    budgetTableBody.addEventListener('dragleave', e => {
+        // Check if the mouse is leaving the table body entirely
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+             document.querySelectorAll('.drop-indicator-top, .drop-indicator-bottom').forEach(ind => {
+                ind.classList.remove('drop-indicator-top', 'drop-indicator-bottom');
+            });
+        }
+    });
+
+    budgetTableBody.addEventListener('drop', e => {
+        e.preventDefault();
+        document.querySelectorAll('.drop-indicator-top, .drop-indicator-bottom').forEach(ind => {
+            ind.classList.remove('drop-indicator-top', 'drop-indicator-bottom');
+        });
+
+        const dropTargetRow = e.target.closest('tr.budget-row');
+        if (!draggedItemId || !dropTargetRow || dropTargetRow.dataset.id === draggedItemId) {
+            return;
+        }
+
+        const draggedIndex = S.budget.findIndex(item => item.id === draggedItemId);
+        let dropIndex = S.budget.findIndex(item => item.id === dropTargetRow.dataset.id);
+
+        if (draggedIndex === -1 || dropIndex === -1) return;
+
+        const rect = dropTargetRow.getBoundingClientRect();
+        const offset = e.clientY - rect.top - (rect.height / 2);
+        
+        const [draggedItem] = S.budget.splice(draggedIndex, 1);
+        
+        // Adjust index based on drop position (top or bottom half of the row)
+        if (offset > 0) { // Dropped on the bottom half, insert after
+            S.budget.splice(dropIndex + 1, 0, draggedItem);
+        } else { // Dropped on the top half, insert before
+            S.budget.splice(dropIndex, 0, draggedItem);
+        }
+        
+        draggedItemId = null;
+        render(); // Re-render to show the new order
+    });
+}
+
+
+/* Boot */
+(function(){ const realRender=render; window.render=function(){ preserveCaret(realRender); }; })();
+render();
+</script>
+</body>
+</html>
